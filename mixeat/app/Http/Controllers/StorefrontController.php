@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
@@ -13,161 +14,6 @@ class StorefrontController extends Controller
         'All',
         'Food Trays',
         'Food Bowls',
-    ];
-
-    protected array $featuredProducts = [
-        [
-            'id' => 1,
-            'name' => 'Chicken Meal',
-            'category' => 'Meals',
-            'description' => 'Delicious and satisfying chicken meal.',
-            'price' => 149.00,
-            'image' => 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=80',
-            'badge' => 'Featured',
-            'available' => true,
-        ],
-        [
-            'id' => 2,
-            'name' => 'Crispy Chicken',
-            'category' => 'Chicken',
-            'description' => 'Crunchy, juicy, and packed with flavor.',
-            'price' => 129.00,
-            'image' => 'https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80',
-            'badge' => 'Best Seller',
-            'available' => true,
-        ],
-        [
-            'id' => 3,
-            'name' => 'Classic Burger',
-            'category' => 'Burgers',
-            'description' => 'A savory burger stacked with classic toppings.',
-            'price' => 135.00,
-            'image' => 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=900&q=80',
-            'badge' => 'Popular',
-            'available' => true,
-        ],
-        [
-            'id' => 4,
-            'name' => 'Cheesy Burger',
-            'category' => 'Burgers',
-            'description' => 'Loaded with melted cheese and rich sauce.',
-            'price' => 155.00,
-            'image' => 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80',
-            'badge' => 'Hot Pick',
-            'available' => false,
-        ],
-        [
-            'id' => 5,
-            'name' => 'Carbonara',
-            'category' => 'Pasta',
-            'description' => 'Creamy pasta with savory and comforting flavors.',
-            'price' => 169.00,
-            'image' => 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?auto=format&fit=crop&w=900&q=80',
-            'badge' => 'Featured',
-            'available' => true,
-        ],
-        [
-            'id' => 6,
-            'name' => 'French Fries',
-            'category' => 'Snacks',
-            'description' => 'Golden and crispy side that completes any meal.',
-            'price' => 79.00,
-            'image' => 'https://images.unsplash.com/photo-1576107232684-1279f390859f?auto=format&fit=crop&w=900&q=80',
-            'badge' => null,
-            'available' => true,
-        ],
-        [
-            'id' => 7,
-            'name' => 'Iced Tea',
-            'category' => 'Drinks',
-            'description' => 'Refreshing iced tea served chilled.',
-            'price' => 45.00,
-            'image' => 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80',
-            'badge' => null,
-            'available' => true,
-        ],
-        [
-            'id' => 8,
-            'name' => 'Soft Drink',
-            'category' => 'Drinks',
-            'description' => 'Classic fizzy drink with a cool finish.',
-            'price' => 35.00,
-            'image' => 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80',
-            'badge' => null,
-            'available' => true,
-        ],
-        [
-            'id' => 9,
-            'name' => 'Chocolate Cake',
-            'category' => 'Desserts',
-            'description' => 'Rich chocolate cake for a sweet ending.',
-            'price' => 120.00,
-            'image' => 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=900&q=80',
-            'badge' => 'Sweet Treat',
-            'available' => true,
-        ],
-    ];
-
-    protected array $branches = [
-        [
-            'name' => 'MixEat Banilad',
-            'address' => 'Banilad, Cebu City',
-            'opening_hours' => '8:00 AM - 9:00 PM',
-            'distance' => '1.2 km away',
-        ],
-        [
-            'name' => 'MixEat Mandaue',
-            'address' => 'M. C. Briones St., Mandaue City',
-            'opening_hours' => '9:00 AM - 10:00 PM',
-            'distance' => '3.4 km away',
-        ],
-        [
-            'name' => 'MixEat Talamban',
-            'address' => 'Talamban, Cebu City',
-            'opening_hours' => '7:30 AM - 9:30 PM',
-            'distance' => '5.1 km away',
-        ],
-    ];
-
-    protected array $cartItems = [
-        [
-            'id' => 1,
-            'name' => 'Chicken Meal',
-            'price' => 149.00,
-            'quantity' => 2,
-            'image' => 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=80',
-        ],
-        [
-            'id' => 6,
-            'name' => 'French Fries',
-            'price' => 79.00,
-            'quantity' => 1,
-            'image' => 'https://images.unsplash.com/photo-1576107232684-1279f390859f?auto=format&fit=crop&w=900&q=80',
-        ],
-    ];
-
-    protected array $orders = [
-        [
-            'id' => 'MX-000001',
-            'date' => 'Sep 15, 2026',
-            'branch' => 'MixEat Banilad',
-            'total' => 427.00,
-            'status' => 'Preparing',
-        ],
-        [
-            'id' => 'MX-000002',
-            'date' => 'Sep 12, 2026',
-            'branch' => 'MixEat Mandaue',
-            'total' => 320.00,
-            'status' => 'Ready',
-        ],
-        [
-            'id' => 'MX-000003',
-            'date' => 'Sep 05, 2026',
-            'branch' => 'MixEat Talamban',
-            'total' => 185.00,
-            'status' => 'Completed',
-        ],
     ];
 
     public function home()
@@ -223,24 +69,145 @@ class StorefrontController extends Controller
         ]);
     }
 
-    protected function branchOptions(): array
+    public function orders()
     {
-        return Branch::orderBy('id')->get()->map(fn (Branch $branch) => $branch->toArray())->all();
+        // Fetch orders placed by the current authenticated user
+        $userOrders = Order::with(['branch', 'items'])
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->get();
+
+        // Active Orders (Real-time status tracking for customer dashboard)
+        $activeOrders = $userOrders->whereIn('status', ['Pending', 'Preparing', 'Ready for Pickup']);
+
+        // Order History (Past closed transactions)
+        $orderHistory = $userOrders->whereIn('status', ['Completed', 'Declined', 'Cancelled']);
+
+        return view('storefront.orders', compact('activeOrders', 'orderHistory'));
     }
 
-    protected function promotionSettings(): array
+    public function orderDetail(string $id)
     {
-        $settings = SiteSetting::query()
-            ->whereIn('key', ['promotion_image', 'promotion_label', 'promotion_title', 'promotion_price'])
-            ->pluck('value', 'key')
-            ->all();
+        $order = Order::with(['branch', 'items'])
+            ->where('order_number', 'MX-'.str_pad((int) $id, 6, '0', STR_PAD_LEFT))
+            ->first();
 
-        return [
-            'image' => ! empty($settings['promotion_image']) ? asset('storage/'.$settings['promotion_image']) : 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80',
-            'label' => $settings['promotion_label'] ?? "Today's favorite",
-            'title' => $settings['promotion_title'] ?? 'Chicken Meal Combo',
-            'price' => $settings['promotion_price'] ?? '149',
+        $formattedOrder = $order ? [
+            'id' => $order->order_number,
+            'date' => $order->created_at ? $order->created_at->format('M d, Y') : 'Just now',
+            'branch' => $order->branch?->name ?? 'MixEat',
+            'total' => (float) $order->total,
+            'status' => $order->status,
+            'items' => $order->items,
+        ] : [
+            'id' => 'MX-'.str_pad((int) $id, 6, '0', STR_PAD_LEFT),
+            'date' => now()->format('M d, Y'),
+            'branch' => 'MixEat',
+            'total' => 0.00,
+            'status' => 'Pending',
+            'items' => [],
         ];
+
+        return view('storefront.order-detail', [
+            'order' => $formattedOrder,
+            'statuses' => [
+                'Pending',
+                'Preparing',
+                'Ready for Pickup',
+                'Completed',
+                'Cancelled',
+                'Declined',
+            ],
+        ]);
+    }
+
+    public function cart()
+    {
+        // Preserve string keys from session cart to allow variant key removal
+        $items = session('cart', []);
+        $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
+        $deliveryFee = 0;
+
+        return view('storefront.cart', [
+            'items' => $items,
+            'subtotal' => $subtotal,
+            'deliveryFee' => $deliveryFee,
+            'total' => $subtotal + $deliveryFee,
+        ]);
+    }
+
+    public function checkout()
+    {
+        $items = session('cart', []);
+        $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
+        $deliveryFee = 0;
+        $branches = $this->branchOptions();
+        $selectedBranch = $branches[(int) session('selected_branch', 0)] ?? ($branches[0] ?? []);
+
+        return view('storefront.checkout', [
+            'items' => $items,
+            'selectedBranch' => $selectedBranch,
+            'subtotal' => $subtotal,
+            'deliveryFee' => $deliveryFee,
+            'total' => $subtotal + $deliveryFee,
+        ]);
+    }
+
+    public function placeOrder()
+    {
+        $items = session('cart', []);
+        abort_if(empty($items), 422, 'Your cart is empty.');
+
+        $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
+        $branchId = $this->getActiveBranchId();
+
+        $orderCount = Order::count() + 1;
+        $orderNumber = 'MX-'.str_pad($orderCount, 6, '0', STR_PAD_LEFT);
+
+        // 1. Save main order record
+        $order = Order::create([
+            'order_number' => $orderNumber,
+            'user_id' => auth()->id(),
+            'branch_id' => $branchId,
+            'status' => 'Pending',
+            'type' => 'Pickup',
+            'total' => $subtotal,
+        ]);
+
+        // 2. Save each ordered product and add-ons to order_items table
+        foreach ($items as $item) {
+            $order->items()->create([
+                'product_name' => $item['name'],
+                'quantity'     => $item['quantity'],
+                'price'        => $item['price'],
+                'addons'       => $item['addons'] ?? [],
+            ]);
+        }
+
+        session()->put('latest_order', [
+            'id' => $order->order_number,
+            'branch' => $order->branch?->name ?? 'MixEat',
+            'type' => $order->type,
+            'time' => '25-30 minutes',
+            'total' => $order->total,
+        ]);
+
+        session()->forget('cart');
+
+        return redirect()->route('order-confirmation');
+    }
+
+    public function orderConfirmation()
+    {
+        return view('storefront.order-confirmation', [
+            'order' => session('latest_order', [
+                'id' => 'MX-000001',
+                'branch' => 'MixEat Banilad',
+                'type' => 'Pickup',
+                'time' => '25-30 minutes',
+                'total' => 0.00,
+            ]),
+        ]);
     }
 
     public function product(string $id)
@@ -288,24 +255,55 @@ class StorefrontController extends Controller
         return back()->with('branch_status', $branches[$branchIndex]['name'].' selected.');
     }
 
-    public function addToCart(string $id)
+    public function addToCart(Request $request, string $id)
     {
         $product = collect($this->catalogProducts())->firstWhere('id', (int) $id);
 
-        abort_unless($product && $product['available'], 404);
+        if (! $product || ! $product['available']) {
+            return back()->with('cart_status', 'Sorry, this item is sold out at the selected branch.');
+        }
 
+        $validated = $request->validate([
+            'quantity' => ['nullable', 'integer', 'min:1'],
+            'addons'   => ['nullable', 'array'],
+        ]);
+
+        $quantity = (int) ($validated['quantity'] ?? 1);
+        $selectedAddons = $validated['addons'] ?? [];
+
+        // Add-on price dictionary
+        $addonPrices = [
+            'Extra Rice'  => 20,
+            'Extra Sauce' => 10,
+            'Soft Drink'  => 30,
+        ];
+
+        $unitPrice = (float) $product['price'];
+        $appliedAddons = [];
+
+        foreach ($selectedAddons as $addon) {
+            if (isset($addonPrices[$addon])) {
+                $unitPrice += $addonPrices[$addon];
+                $appliedAddons[] = $addon;
+            }
+        }
+
+        sort($appliedAddons);
         $cart = session('cart', []);
-        $cartItemKey = (string) $product['id'];
+
+        // Unique hash key per variant item
+        $cartItemKey = (string) $product['id'] . '_' . md5(implode(',', $appliedAddons));
 
         if (isset($cart[$cartItemKey])) {
-            $cart[$cartItemKey]['quantity']++;
+            $cart[$cartItemKey]['quantity'] += $quantity;
         } else {
             $cart[$cartItemKey] = [
-                'id' => $product['id'],
-                'name' => $product['name'],
-                'price' => $product['price'],
-                'quantity' => 1,
-                'image' => $product['image'],
+                'id'       => $product['id'],
+                'name'     => $product['name'],
+                'price'    => $unitPrice,
+                'quantity' => $quantity,
+                'image'    => $product['image'],
+                'addons'   => $appliedAddons,
             ];
         }
 
@@ -317,10 +315,12 @@ class StorefrontController extends Controller
     public function removeFromCart(string $id)
     {
         $cart = session('cart', []);
-        $removedItem = $cart[(string) $id] ?? null;
+        $removedItem = $cart[$id] ?? null;
 
-        unset($cart[(string) $id]);
-        session(['cart' => $cart]);
+        if (isset($cart[$id])) {
+            unset($cart[$id]);
+            session(['cart' => $cart]);
+        }
 
         return back()->with('cart_status', $removedItem
             ? $removedItem['name'].' removed from your cart.'
@@ -332,120 +332,22 @@ class StorefrontController extends Controller
         $quantity = $request->validate([
             'quantity' => ['required', 'integer', 'min:0'],
         ])['quantity'];
+
         $cart = session('cart', []);
 
-        if (! isset($cart[(string) $id])) {
+        if (! isset($cart[$id])) {
             return back();
         }
 
         if ($quantity === 0) {
-            unset($cart[(string) $id]);
+            unset($cart[$id]);
         } else {
-            $cart[(string) $id]['quantity'] = $quantity;
+            $cart[$id]['quantity'] = $quantity;
         }
 
         session(['cart' => $cart]);
 
         return back();
-    }
-
-    protected function catalogProducts(): array
-    {
-        $branchId = (int) session('selected_branch', 0) + 1;
-
-        return Product::with('branches')->get()->map(function (Product $product) use ($branchId) {
-            $branchProduct = $product->branches->firstWhere('id', $branchId);
-
-            return [
-                'id' => $product->id,
-                'name' => $product->name,
-                'category' => $product->category,
-                'description' => $product->description,
-                'price' => (float) $product->price,
-                'image' => $product->imageUrl(),
-                'badge' => $product->badge,
-                'available' => (bool) ($branchProduct?->pivot->available ?? false),
-            ];
-        })->all();
-    }
-
-    public function cart()
-    {
-        $items = array_values(session('cart', []));
-        $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
-        $deliveryFee = 0;
-
-        return view('storefront.cart', [
-            'items' => $items,
-            'subtotal' => $subtotal,
-            'deliveryFee' => $deliveryFee,
-            'total' => $subtotal + $deliveryFee,
-        ]);
-    }
-
-    public function checkout()
-    {
-        $items = array_values(session('cart', []));
-        $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
-        $deliveryFee = 0;
-        $branches = $this->branchOptions();
-        $selectedBranch = $branches[(int) session('selected_branch', 0)] ?? $branches[0];
-
-        return view('storefront.checkout', [
-            'items' => $items,
-            'selectedBranch' => $selectedBranch,
-            'subtotal' => $subtotal,
-            'deliveryFee' => $deliveryFee,
-            'total' => $subtotal + $deliveryFee,
-        ]);
-    }
-
-    public function orderConfirmation()
-    {
-        return view('storefront.order-confirmation', [
-            'order' => [
-                'id' => 'MX-000001',
-                'branch' => 'MixEat Banilad',
-                'type' => 'Pickup',
-                'time' => '25-30 minutes',
-                'total' => 427.00,
-            ],
-        ]);
-    }
-
-    public function orders()
-    {
-        return view('storefront.orders', [
-            'orders' => $this->orders,
-        ]);
-    }
-
-    public function orderDetail(string $id)
-    {
-        $order = collect($this->orders)->firstWhere('id', 'MX-'.str_pad((int) $id, 6, '0', STR_PAD_LEFT)) ?? $this->orders[0];
-
-        return view('storefront.order-detail', [
-            'order' => $order,
-            'statuses' => [
-                'Pending',
-                'Confirmed',
-                'Preparing',
-                'Ready',
-                'Out for Delivery',
-                'Completed',
-                'Cancelled',
-            ],
-        ]);
-    }
-
-    public function login()
-    {
-        return view('storefront.login');
-    }
-
-    public function register()
-    {
-        return view('storefront.register');
     }
 
     public function profile()
@@ -465,5 +367,72 @@ class StorefrontController extends Controller
     public function contact()
     {
         return view('storefront.contact');
+    }
+
+    protected function branchOptions(): array
+    {
+        return Branch::orderBy('id')->get()->map(function (Branch $branch) {
+            return [
+                'id' => $branch->id,
+                'name' => $branch->name,
+                'address' => $branch->address,
+                'opening_hours' => $branch->opening_hours,
+                'distance' => $branch->distance ?? '1.0 km away',
+            ];
+        })->all();
+    }
+
+    protected function getActiveBranchId(): int
+    {
+        $branches = $this->branchOptions();
+        $selectedIndex = (int) session('selected_branch', 0);
+
+        return $branches[$selectedIndex]['id'] ?? ($branches[0]['id'] ?? 1);
+    }
+
+    protected function promotionSettings(): array
+    {
+        $settings = SiteSetting::query()
+            ->whereIn('key', ['promotion_image', 'promotion_label', 'promotion_title', 'promotion_price'])
+            ->pluck('value', 'key')
+            ->all();
+
+        return [
+            'image' => ! empty($settings['promotion_image']) ? asset('storage/'.$settings['promotion_image']) : 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80',
+            'label' => $settings['promotion_label'] ?? "Today's favorite",
+            'title' => $settings['promotion_title'] ?? 'Chicken Meal Combo',
+            'price' => isset($settings['promotion_price']) && $settings['promotion_price'] !== '' ? $settings['promotion_price'] : null,
+        ];
+    }
+
+    protected function catalogProducts(): array
+    {
+        $branchId = $this->getActiveBranchId();
+
+        return Product::with(['branches' => function ($query) use ($branchId) {
+            $query->where('branches.id', $branchId);
+        }])->get()->map(function (Product $product) {
+            $branchPivot = $product->branches->first()?->pivot;
+
+            $availability = true;
+            if ($branchPivot) {
+                if (isset($branchPivot->available)) {
+                    $availability = (bool) $branchPivot->available;
+                } elseif (isset($branchPivot->is_available)) {
+                    $availability = (bool) $branchPivot->is_available;
+                }
+            }
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'category' => $product->category,
+                'description' => $product->description,
+                'price' => (float) $product->price,
+                'image' => method_exists($product, 'imageUrl') ? $product->imageUrl() : asset('storage/'.$product->image),
+                'badge' => $product->badge,
+                'available' => $availability,
+            ];
+        })->all();
     }
 }

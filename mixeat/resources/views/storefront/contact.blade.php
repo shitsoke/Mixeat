@@ -16,15 +16,15 @@
                     <div class="mt-6 space-y-4 text-sm text-[#555555]">
                         <div>
                             <p class="font-bold uppercase tracking-[0.12em] text-[#090909]">Phone</p>
-                            <p class="mt-2">+63 32 123 4567</p>
+                            <p class="mt-2">0920 967 5537</p>
                         </div>
                         <div>
                             <p class="font-bold uppercase tracking-[0.12em] text-[#090909]">Email</p>
-                            <p class="mt-2">ragnarokgenshin@gmail.com</p>
+                            <p class="mt-2">joniesmarketingassistant@gmail.com</p>
                         </div>
                         <div>
                             <p class="font-bold uppercase tracking-[0.12em] text-[#090909]">Address</p>
-                            <p class="mt-2">123 Mango Avenue, Cebu City</p>
+                            <p class="mt-2">1058 Hernan Cortes St., Subangdaku, Mandaue City, Philippines, 6014</p>
                         </div>
                     </div>
 

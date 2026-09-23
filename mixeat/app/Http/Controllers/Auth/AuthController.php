@@ -26,7 +26,18 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            return redirect()->route('profile');
+            $user = Auth::user();
+
+            // Role-based redirects
+            if ($user->isMarketing()) {
+                return redirect()->route('admin.products.index');
+            }
+
+            if ($user->isSupervisor()) {
+                return redirect()->route('admin.supervisors.index');
+            }
+
+            return redirect()->intended(route('profile'));
         }
 
         return back()->withErrors([
@@ -58,6 +69,7 @@ class AuthController extends Controller
             'phone' => $validated['phone'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'role' => 'customer',
         ]);
 
         Auth::login($user);

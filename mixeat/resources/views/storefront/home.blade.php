@@ -21,21 +21,31 @@
                         View Menu
                     </a>
                 </div>
-
             </div>
 
             <div class="relative">
                 <div class="absolute -left-7 top-10 h-28 w-28 rounded-full bg-[#FFC60A]/20 blur-2xl"></div>
                 <div class="absolute -right-4 bottom-10 h-32 w-32 rounded-full bg-[#E5A900]/20 blur-2xl"></div>
+                
                 <div class="relative overflow-hidden rounded-[32px] border border-[#E8DFAF] bg-white p-4 shadow-[0_20px_70px_rgba(229,169,0,0.18)]">
-                    <img src="{{ $promotion['image'] }}" alt="{{ $promotion['title'] }}" class="h-[480px] w-full rounded-[24px] object-cover">
-                    <div class="absolute bottom-8 left-8 right-8 rounded-[24px] bg-white/90 p-4 shadow-lg backdrop-blur-sm">
+                    <!-- Edge-to-Edge Image Box -->
+                    <div class="overflow-hidden rounded-[24px]">
+                        <img src="{{ $promotion['image'] }}" alt="{{ $promotion['title'] }}" class="w-full h-auto object-cover">
+                    </div>
+                    
+                    <!-- Information Bar Placed Directly Below Image (Desktop & Mobile) -->
+                    <div class="mt-4 rounded-[20px] border border-[#E8DFAF]/80 bg-[#FFF9E6] p-4 shadow-sm">
                         <div class="flex items-center justify-between gap-3">
                             <div>
-                                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[#E5A900]">{{ $promotion['label'] }}</p>
-                                <h3 class="mt-1 text-xl font-bold text-[#090909]">{{ $promotion['title'] }}</h3>
+                                @if(!empty($promotion['label']))
+                                    <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#E5A900]">{{ $promotion['label'] }}</p>
+                                @endif
+                                <h3 class="mt-0.5 text-lg font-bold text-[#090909]">{{ $promotion['title'] }}</h3>
                             </div>
-                            <div class="text-xl font-black text-[#FFC60A]">&#8369;{{ number_format((float) $promotion['price'], 2) }}</div>
+                            
+                            @if(!empty($promotion['price']) && is_numeric($promotion['price']) && (float) $promotion['price'] > 0)
+                                <div class="text-xl font-black text-[#FFC60A]">&#8369;{{ number_format((float) $promotion['price'], 2) }}</div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -95,5 +105,3 @@
         </div>
     </section>
 @endsection
-
-

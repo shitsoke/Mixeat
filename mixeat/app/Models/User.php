@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -26,6 +27,8 @@ class User extends Authenticatable
         'email',
         'password',
         'is_admin',
+        'role',      // 'marketing', 'supervisor', or 'customer'
+        'branch_id', // Foreign key for assigned branch (Supervisors)
     ];
 
     /**
@@ -50,5 +53,29 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_admin' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the branch associated with the supervisor.
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    /**
+     * Check if user belongs to the Marketing team.
+     */
+    public function isMarketing(): bool
+    {
+        return $this->role === 'marketing';
+    }
+
+    /**
+     * Check if user is a Branch Supervisor.
+     */
+    public function isSupervisor(): bool
+    {
+        return $this->role === 'supervisor';
     }
 }

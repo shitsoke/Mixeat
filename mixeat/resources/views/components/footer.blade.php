@@ -34,9 +34,9 @@
         <div>
             <h3 class="mb-4 text-base font-bold uppercase tracking-[0.08em] text-[#FFC60A]">Contact</h3>
             <ul class="space-y-3 text-sm text-white/75">
-                <li>+63 32 123 4567</li>
-                <li>hello@mixeat.ph</li>
-                <li>123 Mango Avenue, Cebu City</li>
+                <li>0920 967 5537</li>
+                <li>joniesmarketingassistant@gmail.com</li>
+                <li>1058 Hernan Cortes St., Subangdaku, Mandaue City, Philippines, 6014</li>
             </ul>
         </div>
     </div>

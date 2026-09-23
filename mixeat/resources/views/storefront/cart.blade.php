@@ -32,35 +32,52 @@
             @else
                 <div class="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_360px]">
                     <div class="space-y-5">
-                        @foreach ($items as $item)
+                        @foreach ($items as $key => $item)
                             <div class="flex flex-col gap-5 rounded-[28px] border border-[#E8DFAF] bg-white p-4 shadow-[0_14px_40px_rgba(229,169,0,0.08)] sm:flex-row sm:items-center">
                                 <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="h-28 w-full rounded-[20px] object-cover sm:w-28">
                                 <div class="flex-1">
-                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                         <div>
                                             <h3 class="text-xl font-bold text-[#090909]">{{ $item['name'] }}</h3>
-                                            <p class="mt-1 text-lg font-semibold text-[#FFC60A]">&#8369;{{ number_format($item['price'], 2) }}</p>
+                                            
+                                            {{-- Selected Add-ons Badges --}}
+                                            @if (!empty($item['addons']))
+                                                <div class="mt-1 flex flex-wrap gap-1.5">
+                                                    @foreach ($item['addons'] as $addon)
+                                                        <span class="inline-block rounded-full bg-[#FFF9E6] border border-[#E8DFAF] px-2.5 py-0.5 text-[11px] font-bold text-[#090909]">
+                                                            + {{ $addon }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                            <p class="mt-2 text-lg font-semibold text-[#FFC60A]">&#8369;{{ number_format($item['price'], 2) }}</p>
                                         </div>
-                                        <form action="{{ route('cart.remove', ['id' => $item['id']]) }}" method="POST">
+
+                                        <form action="{{ route('cart.remove', ['id' => $key]) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-sm font-semibold text-[#DC3545]">Remove</button>
+                                            <button type="submit" class="text-sm font-semibold text-[#DC3545] hover:underline">Remove</button>
                                         </form>
                                     </div>
+
                                     <div class="mt-4 flex items-center justify-between gap-4">
                                         <div class="inline-flex items-center rounded-full border border-[#E8DFAF] bg-[#FFF9E6] px-3 py-2">
-                                            <form action="{{ route('cart.quantity', ['id' => $item['id']]) }}" method="POST">
+                                            <form action="{{ route('cart.quantity', ['id' => $key]) }}" method="POST">
                                                 @csrf @method('PATCH')
                                                 <input type="hidden" name="quantity" value="{{ max(0, $item['quantity'] - 1) }}">
                                                 <button type="submit" aria-label="Decrease {{ $item['name'] }} quantity" class="h-8 w-8 text-xl font-bold text-[#090909]">-</button>
                                             </form>
+
                                             <span class="w-10 text-center text-lg font-bold text-[#090909]">{{ $item['quantity'] }}</span>
-                                            <form action="{{ route('cart.quantity', ['id' => $item['id']]) }}" method="POST">
+
+                                            <form action="{{ route('cart.quantity', ['id' => $key]) }}" method="POST">
                                                 @csrf @method('PATCH')
                                                 <input type="hidden" name="quantity" value="{{ $item['quantity'] + 1 }}">
                                                 <button type="submit" aria-label="Increase {{ $item['name'] }} quantity" class="h-8 w-8 text-xl font-bold text-[#090909]">+</button>
                                             </form>
                                         </div>
+
                                         <div class="text-xl font-black text-[#090909]">&#8369;{{ number_format($item['price'] * $item['quantity'], 2) }}</div>
                                     </div>
                                 </div>
@@ -99,5 +116,3 @@
         </div>
     </section>
 @endsection
-
-

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Tests\TestCase;
 
 class CartFlowTest extends TestCase
@@ -59,5 +60,25 @@ class CartFlowTest extends TestCase
             ->patch('/cart/1/quantity', ['quantity' => 0])
             ->assertRedirect('/cart')
             ->assertSessionMissing('cart.1');
+    }
+
+    public function test_placed_order_is_added_to_order_history_and_clears_cart(): void
+    {
+        $user = User::factory()->create();
+
+        $this->post('/cart/1')
+            ->assertRedirect('/menu');
+
+        $this->actingAs($user)
+            ->post('/orders')
+            ->assertRedirect('/order-confirmation')
+            ->assertSessionHas('latest_order.id', 'MX-000004')
+            ->assertSessionMissing('cart');
+
+        $this->actingAs($user)
+            ->get('/orders')
+            ->assertOk()
+            ->assertSee('MX-000004')
+            ->assertSee('Chicken Meal');
     }
 }

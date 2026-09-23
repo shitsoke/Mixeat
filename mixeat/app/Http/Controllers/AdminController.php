@@ -31,7 +31,7 @@ class AdminController extends Controller
 
         return view('admin.products.form', [
             'product' => new Product(),
-            'branches' => Branch::orderBy('id')->get(),
+            'branches' => Branch::orderBy('id')->get(), 
             'categories' => self::CATEGORIES,
         ]);
     }
@@ -146,12 +146,15 @@ class AdminController extends Controller
         $data = $request->validate([
             'label' => ['required', 'string', 'max:100'],
             'title' => ['required', 'string', 'max:255'],
-            'price' => ['nullable', 'numeric', 'min:0'],
+            'price' => ['nullable', 'numeric', 'min:0'], // Optional price validation
             'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
 
         foreach (['label', 'title', 'price'] as $key) {
-            SiteSetting::updateOrCreate(['key' => 'promotion_'.$key], ['value' => $data[$key]]);
+            SiteSetting::updateOrCreate(
+                ['key' => 'promotion_'.$key],
+                ['value' => $data[$key] ?? ''] // Safely converts null to empty string
+            );
         }
 
         if ($request->hasFile('image')) {

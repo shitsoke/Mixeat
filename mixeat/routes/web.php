@@ -3,8 +3,16 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\StorefrontController;
+use App\Http\Controllers\Admin\CmsController;
+use App\Http\Controllers\Admin\SupervisorController;
+use App\Http\Controllers\Admin\SupervisorManagementController;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Public & Guest Routes
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [StorefrontController::class, 'home'])->name('home');
 Route::get('/menu', [StorefrontController::class, 'menu'])->name('menu');
 Route::get('/featured', [StorefrontController::class, 'featured'])->name('featured');
@@ -28,7 +36,13 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
 });
 
+/*
+|--------------------------------------------------------------------------
+| Authenticated Customer Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth')->group(function () {
+    Route::post('/orders', [StorefrontController::class, 'placeOrder'])->name('orders.place');
     Route::get('/checkout', [StorefrontController::class, 'checkout'])->name('checkout');
     Route::get('/order-confirmation', [StorefrontController::class, 'orderConfirmation'])->name('order-confirmation');
     Route::get('/profile', [StorefrontController::class, 'profile'])->name('profile');
@@ -37,20 +51,59 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
-Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/promotion', [AdminController::class, 'promotion'])->name('promotion');
-    Route::put('/promotion', [AdminController::class, 'updatePromotion'])->name('promotion.update');
-    Route::get('/products', [AdminController::class, 'index'])->name('products.index');
-    Route::get('/products/create', [AdminController::class, 'create'])->name('products.create');
-    Route::post('/products', [AdminController::class, 'store'])->name('products.store');
-    Route::get('/products/{product}/edit', [AdminController::class, 'edit'])->name('products.edit');
-    Route::put('/products/{product}', [AdminController::class, 'update'])->name('products.update');
-    Route::delete('/products/{product}', [AdminController::class, 'destroy'])->name('products.destroy');
-    Route::patch('/products/{product}/branches/{branch}', [AdminController::class, 'toggleAvailability'])->name('products.availability');
-    Route::get('/branches', [AdminController::class, 'branches'])->name('branches.index');
-    Route::get('/branches/create', [AdminController::class, 'createBranch'])->name('branches.create');
-    Route::post('/branches', [AdminController::class, 'storeBranch'])->name('branches.store');
-    Route::get('/branches/{branch}/edit', [AdminController::class, 'editBranch'])->name('branches.edit');
-    Route::put('/branches/{branch}', [AdminController::class, 'updateBranch'])->name('branches.update');
-    Route::delete('/branches/{branch}', [AdminController::class, 'destroyBranch'])->name('branches.destroy');
+/*
+|--------------------------------------------------------------------------
+| Admin Routes (Separated by Role)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+
+    // 1. Marketing Admin Routes
+    Route::middleware(['role:marketing'])->group(function () {
+        // Promotions
+        Route::get('/promotion', [AdminController::class, 'promotion'])->name('promotion');
+        Route::put('/promotion', [AdminController::class, 'updatePromotion'])->name('promotion.update');
+
+        // Master Menu Products
+        Route::get('/products', [AdminController::class, 'index'])->name('products.index');
+        Route::get('/products/create', [AdminController::class, 'create'])->name('products.create');
+        Route::post('/products', [AdminController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}/edit', [AdminController::class, 'edit'])->name('products.edit');
+        Route::put('/products/{product}', [AdminController::class, 'update'])->name('products.update');
+        Route::delete('/products/{product}', [AdminController::class, 'destroy'])->name('products.destroy');
+        Route::patch('/products/{product}/branches/{branch}', [AdminController::class, 'toggleAvailability'])->name('products.availability');
+
+        // Branch Management
+        Route::get('/branches', [AdminController::class, 'branches'])->name('branches.index');
+        Route::get('/branches/create', [AdminController::class, 'createBranch'])->name('branches.create');
+        Route::post('/branches', [AdminController::class, 'storeBranch'])->name('branches.store');
+        Route::get('/branches/{branch}/edit', [AdminController::class, 'editBranch'])->name('branches.edit');
+        Route::put('/branches/{branch}', [AdminController::class, 'updateBranch'])->name('branches.update');
+        Route::delete('/branches/{branch}', [AdminController::class, 'destroyBranch'])->name('branches.destroy');
+
+        // Supervisor Assignment Management
+        Route::get('/supervisors/manage', [SupervisorManagementController::class, 'index'])->name('supervisors.manage');
+        Route::post('/supervisors/assign', [SupervisorManagementController::class, 'assignBranch'])->name('supervisors.assign');
+        Route::delete('/supervisors/remove/{user}', [SupervisorManagementController::class, 'removeSupervisor'])->name('supervisors.remove');
+
+        // CMS Pages (About & Contact)
+        Route::get('/cms/about', [CmsController::class, 'editAbout'])->name('cms.about');
+        Route::post('/cms/about', [CmsController::class, 'updateAbout'])->name('cms.about.update');
+        Route::get('/cms/contact', [CmsController::class, 'editContact'])->name('cms.contact');
+        Route::post('/cms/contact', [CmsController::class, 'updateContact'])->name('cms.contact.update');
+    });
+
+    // 2. Branch Supervisor Routes
+    Route::middleware(['role:supervisor'])->group(function () {
+        Route::get('/supervisors', [SupervisorController::class, 'index'])->name('supervisors.index');
+        Route::get('/supervisors/export-daily-sales', [SupervisorController::class, 'exportDailySales'])->name('supervisors.export-daily-sales');
+        Route::patch('/supervisors/{product}/toggle', [SupervisorController::class, 'toggleStatus'])->name('supervisors.toggle');
+        
+        // Order Status Actions
+        Route::patch('/supervisors/orders/{order}/accept', [SupervisorController::class, 'acceptOrder'])->name('supervisors.orders.accept');
+        Route::patch('/supervisors/orders/{order}/ready', [SupervisorController::class, 'markReadyForPickup'])->name('supervisors.orders.ready');
+        Route::patch('/supervisors/orders/{order}/complete', [SupervisorController::class, 'markCompleted'])->name('supervisors.orders.complete');
+        Route::patch('/supervisors/orders/{order}/decline', [SupervisorController::class, 'declineOrder'])->name('supervisors.orders.decline');
+    });
+
 });

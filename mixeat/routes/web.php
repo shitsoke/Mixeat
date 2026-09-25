@@ -6,6 +6,8 @@ use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\Admin\CmsController;
 use App\Http\Controllers\Admin\SupervisorController;
 use App\Http\Controllers\Admin\SupervisorManagementController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,17 +40,56 @@ Route::middleware('guest')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated Customer Routes
+| Email Verification Routes
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    Route::post('/orders', [StorefrontController::class, 'placeOrder'])->name('orders.place');
-    Route::get('/checkout', [StorefrontController::class, 'checkout'])->name('checkout');
-    Route::get('/order-confirmation', [StorefrontController::class, 'orderConfirmation'])->name('order-confirmation');
+    // 1. Notice View: Rendered when an unverified user accesses a 'verified' route
+    Route::get('/email/verify', function () {
+        return view('auth.verify-email');
+    })->name('verification.notice');
+
+    // 2. Verification Link Handler: Link sent to user email
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+
+        return redirect()->route('home')->with('status', 'Your email address has been verified!');
+    })->middleware('signed')->name('verification.verify');
+
+    // 3. Resend Verification Link
+    Route::post('/email/verification-notification', function (Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+
+        return back()->with('message', 'A fresh verification link has been sent to your email address.');
+    })->middleware('throttle:6,1')->name('verification.send');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes (Profile, Password Management & Logout)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
     Route::get('/profile', [StorefrontController::class, 'profile'])->name('profile');
     Route::get('/profile/edit', [AuthController::class, 'editProfile'])->name('profile.edit');
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+
+    // Password Management Routes
+    Route::get('/profile/password', [AuthController::class, 'showChangePasswordForm'])->name('password.change');
+    Route::put('/profile/password', [AuthController::class, 'updatePassword'])->name('password.update');
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Customer Ordering Routes (Protected by Verified Middleware)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/orders', [StorefrontController::class, 'placeOrder'])->name('orders.place');
+    Route::get('/checkout', [StorefrontController::class, 'checkout'])->name('checkout');
+    Route::get('/order-confirmation', [StorefrontController::class, 'orderConfirmation'])->name('order-confirmation');
 });
 
 /*

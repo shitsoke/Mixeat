@@ -17,7 +17,13 @@
                     </div>
                     <div>
                         <h1 class="text-3xl font-black text-[#090909]">{{ $user->name }}</h1>
-                        <p class="text-[#555555]">Customer Account</p>
+                        <p class="text-sm font-medium text-[#777777]">
+                            @if ($user->isMarketing() || $user->isSupervisor() || $user->is_admin)
+                                Admin Account
+                            @else
+                                Customer Account
+                            @endif
+                        </p>
                     </div>
                 </div>
 
@@ -35,7 +41,13 @@
                         <p class="text-sm font-bold uppercase tracking-[0.12em] text-[#555555]">Account Actions</p>
                         <div class="mt-4 space-y-3">
                             <a href="{{ route('profile.edit') }}" class="block w-full rounded-full border border-[#FFC60A] bg-white px-5 py-3 text-center text-sm font-semibold text-[#FFC60A] transition hover:bg-[#FFF4BF]">Edit Profile</a>
-                            <button type="button" class="w-full rounded-full border border-[#FFC60A] bg-white px-5 py-3 text-sm font-semibold text-[#FFC60A] transition hover:bg-[#FFF4BF]">Change Password</button>
+                            
+                            @if (! $user->isMarketing())
+                                <a href="{{ route('password.change') }}" class="block w-full rounded-full border border-[#FFC60A] bg-white px-5 py-3 text-center text-sm font-semibold text-[#FFC60A] transition hover:bg-[#FFF4BF]">Change Password</a>
+                            @else
+                                <button type="button" disabled class="block w-full cursor-not-allowed rounded-full border border-gray-200 bg-gray-100 px-5 py-3 text-center text-sm font-semibold text-gray-400">Unavailable</button>
+                            @endif
+
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
                                 <button type="submit" class="w-full rounded-full bg-[#FFC60A] px-5 py-3 text-sm font-semibold text-[#090909] shadow-lg shadow-[#E5A900]/25 transition hover:bg-[#E5A900]">Logout</button>
@@ -47,5 +59,3 @@
         </div>
     </section>
 @endsection
-
-

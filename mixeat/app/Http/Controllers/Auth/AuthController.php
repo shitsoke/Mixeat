@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -24,18 +25,29 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-
             $user = Auth::user();
 
-            // Role-based redirects
+            // Role-based redirects for Admin / Internal users (Bypasses customer email verification)
             if ($user->isMarketing()) {
+                $request->session()->regenerate();
                 return redirect()->route('admin.products.index');
             }
 
             if ($user->isSupervisor()) {
+                $request->session()->regenerate();
                 return redirect()->route('admin.supervisors.index');
             }
+
+            // Check if customer has verified their email address
+            if (! $user->hasVerifiedEmail()) {
+                Auth::logout();
+
+                return back()->withErrors([
+                    'email' => 'Please verify your email address before logging in.',
+                ])->onlyInput('email');
+            }
+
+            $request->session()->regenerate();
 
             return redirect()->intended(route('profile'));
         }
@@ -72,9 +84,12 @@ class AuthController extends Controller
             'role' => 'customer',
         ]);
 
+        // Dispatches email verification notification to customer
+        event(new Registered($user));
+
         Auth::login($user);
 
-        return redirect()->route('profile');
+        return redirect()->route('verification.notice');
     }
 
     public function logout(Request $request)
@@ -111,5 +126,38 @@ class AuthController extends Controller
         ]);
 
         return redirect()->route('profile')->with('profile_status', 'Your profile has been updated.');
+    }
+
+    public function showChangePasswordForm()
+    {
+        $user = Auth::user();
+
+        // Marketing admins are strictly restricted from changing passwords via web UI
+        if ($user->isMarketing()) {
+            return redirect()->route('profile')->with('profile_status', 'Marketing admin passwords can only be updated directly in the database.');
+        }
+
+        return view('storefront.change-password');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+
+        // Marketing admins are strictly restricted from updating passwords via web UI
+        if ($user->isMarketing()) {
+            return redirect()->route('profile')->with('profile_status', 'Marketing admin passwords can only be updated directly in the database.');
+        }
+
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
+
+        $user->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return redirect()->route('profile')->with('profile_status', 'Your password has been changed successfully.');
     }
 }

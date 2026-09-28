@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 
 class StorefrontController extends Controller
 {
@@ -15,6 +16,25 @@ class StorefrontController extends Controller
         'Food Trays',
         'Food Bowls',
     ];
+
+    /**
+     * Retrieve cart items from active Session or fallback to 30-day Cookie.
+     */
+    private function getCart(): array
+    {
+        if (session()->has('cart')) {
+            return session('cart', []);
+        }
+
+        $cookieCart = request()->cookie('mixeat_cart');
+        if ($cookieCart) {
+            $cart = json_decode($cookieCart, true) ?? [];
+            session(['cart' => $cart]);
+            return $cart;
+        }
+
+        return [];
+    }
 
     public function home()
     {
@@ -71,16 +91,12 @@ class StorefrontController extends Controller
 
     public function orders()
     {
-        // Fetch orders placed by the current authenticated user
         $userOrders = Order::with(['branch', 'items'])
             ->where('user_id', auth()->id())
             ->latest()
             ->get();
 
-        // Active Orders (Real-time status tracking for customer dashboard)
         $activeOrders = $userOrders->whereIn('status', ['Pending', 'Preparing', 'Ready for Pickup']);
-
-        // Order History (Past closed transactions)
         $orderHistory = $userOrders->whereIn('status', ['Completed', 'Declined', 'Cancelled']);
 
         return view('storefront.orders', compact('activeOrders', 'orderHistory'));
@@ -123,8 +139,7 @@ class StorefrontController extends Controller
 
     public function cart()
     {
-        // Preserve string keys from session cart to allow variant key removal
-        $items = session('cart', []);
+        $items = $this->getCart();
         $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
         $deliveryFee = 0;
 
@@ -138,7 +153,7 @@ class StorefrontController extends Controller
 
     public function checkout()
     {
-        $items = session('cart', []);
+        $items = $this->getCart();
         $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
         $deliveryFee = 0;
         $branches = $this->branchOptions();
@@ -155,7 +170,7 @@ class StorefrontController extends Controller
 
     public function placeOrder()
     {
-        $items = session('cart', []);
+        $items = $this->getCart();
         abort_if(empty($items), 422, 'Your cart is empty.');
 
         $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
@@ -164,7 +179,6 @@ class StorefrontController extends Controller
         $orderCount = Order::count() + 1;
         $orderNumber = 'MX-'.str_pad($orderCount, 6, '0', STR_PAD_LEFT);
 
-        // 1. Save main order record
         $order = Order::create([
             'order_number' => $orderNumber,
             'user_id' => auth()->id(),
@@ -174,7 +188,6 @@ class StorefrontController extends Controller
             'total' => $subtotal,
         ]);
 
-        // 2. Save each ordered product and add-ons to order_items table
         foreach ($items as $item) {
             $order->items()->create([
                 'product_name' => $item['name'],
@@ -192,7 +205,9 @@ class StorefrontController extends Controller
             'total' => $order->total,
         ]);
 
+        // Clear both session and cookie on checkout complete
         session()->forget('cart');
+        Cookie::queue(Cookie::forget('mixeat_cart'));
 
         return redirect()->route('order-confirmation');
     }
@@ -271,7 +286,6 @@ class StorefrontController extends Controller
         $quantity = (int) ($validated['quantity'] ?? 1);
         $selectedAddons = $validated['addons'] ?? [];
 
-        // Add-on price dictionary
         $addonPrices = [
             'Extra Rice'  => 20,
             'Extra Sauce' => 10,
@@ -289,9 +303,8 @@ class StorefrontController extends Controller
         }
 
         sort($appliedAddons);
-        $cart = session('cart', []);
+        $cart = $this->getCart();
 
-        // Unique hash key per variant item
         $cartItemKey = (string) $product['id'] . '_' . md5(implode(',', $appliedAddons));
 
         if (isset($cart[$cartItemKey])) {
@@ -309,17 +322,26 @@ class StorefrontController extends Controller
 
         session(['cart' => $cart]);
 
+        // Queue cookie for 30 days (43,200 minutes)
+        Cookie::queue('mixeat_cart', json_encode($cart), 43200);
+
         return back()->with('cart_status', $product['name'].' added to your cart.');
     }
 
     public function removeFromCart(string $id)
     {
-        $cart = session('cart', []);
+        $cart = $this->getCart();
         $removedItem = $cart[$id] ?? null;
 
         if (isset($cart[$id])) {
             unset($cart[$id]);
             session(['cart' => $cart]);
+
+            if (empty($cart)) {
+                Cookie::queue(Cookie::forget('mixeat_cart'));
+            } else {
+                Cookie::queue('mixeat_cart', json_encode($cart), 43200);
+            }
         }
 
         return back()->with('cart_status', $removedItem
@@ -333,7 +355,7 @@ class StorefrontController extends Controller
             'quantity' => ['required', 'integer', 'min:0'],
         ])['quantity'];
 
-        $cart = session('cart', []);
+        $cart = $this->getCart();
 
         if (! isset($cart[$id])) {
             return back();
@@ -346,6 +368,12 @@ class StorefrontController extends Controller
         }
 
         session(['cart' => $cart]);
+
+        if (empty($cart)) {
+            Cookie::queue(Cookie::forget('mixeat_cart'));
+        } else {
+            Cookie::queue('mixeat_cart', json_encode($cart), 43200);
+        }
 
         return back();
     }

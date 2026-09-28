@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -25,6 +26,7 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            /** @var \App\Models\User $user */
             $user = Auth::user();
 
             // Role-based redirects for Admin / Internal users (Bypasses customer email verification)
@@ -94,10 +96,18 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // 1. Retrieve current cart from session or cookie prior to session destruction
+        $cart = session('cart') ?? json_decode($request->cookie('mixeat_cart'), true);
+
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        // 2. Re-queue cookie for 30 days (43,200 mins) so cart items persist after logout
+        if (!empty($cart)) {
+            Cookie::queue('mixeat_cart', json_encode($cart), 43200);
+        }
 
         return redirect()->route('home');
     }
@@ -130,6 +140,7 @@ class AuthController extends Controller
 
     public function showChangePasswordForm()
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Marketing admins are strictly restricted from changing passwords via web UI
@@ -142,6 +153,7 @@ class AuthController extends Controller
 
     public function updatePassword(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = $request->user();
 
         // Marketing admins are strictly restricted from updating passwords via web UI

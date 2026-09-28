@@ -74,11 +74,6 @@
     <div class="border-t border-white/10 bg-[#090909]">
         <div class="mixeat-shell flex flex-col items-center justify-between gap-3 px-4 py-5 text-sm text-white/60 md:flex-row">
             <p>&copy; 2026 MixEat. All Rights Reserved.</p>
-            <div class="flex gap-4">
-                <a href="https://instagram.com/mixeat" target="_blank" rel="noopener noreferrer" class="hover:text-[#FFC60A] transition">Instagram</a>
-                <a href="https://www.facebook.com/mixeatbyjonies" target="_blank" rel="noopener noreferrer" class="hover:text-[#FFC60A] transition">Facebook</a>
-                <a href="https://x.com/mixeat" target="_blank" rel="noopener noreferrer" class="hover:text-[#FFC60A] transition">X</a>
-            </div>
         </div>
     </div>
 </footer>

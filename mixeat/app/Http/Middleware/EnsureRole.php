@@ -12,7 +12,10 @@ class EnsureRole
     {
         $user = $request->user();
 
-        if (! $user || ! in_array($user->role, $roles)) {
+        $isLegacyMarketingAdmin = $user
+            && $user->is_admin
+            && in_array('marketing', $roles, true);
+        if (! $user || (! in_array($user->role, $roles, true) && ! $isLegacyMarketingAdmin)) {
             abort(403, 'Unauthorized access.');
         }
 

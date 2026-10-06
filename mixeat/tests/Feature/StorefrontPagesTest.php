@@ -11,6 +11,7 @@ class StorefrontPagesTest extends TestCase
     {
         $pages = [
             '/',
+            '/catering',
             '/menu',
             '/featured',
             '/products/1',
@@ -29,6 +30,10 @@ class StorefrontPagesTest extends TestCase
 
             $response->assertStatus(200);
         }
+
+        $this->get('/about')
+            ->assertOk()
+            ->assertSee(asset('images/About-us.jpg'), false);
 
         $this->get('/checkout')->assertRedirect('/login');
         $this->get('/order-confirmation')->assertRedirect('/login');

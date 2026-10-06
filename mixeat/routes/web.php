@@ -4,10 +4,11 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\Admin\CmsController;
+use App\Http\Controllers\Admin\CateringController as AdminCateringController;
+use App\Http\Controllers\Admin\Marketing\CateringManagementController;
 use App\Http\Controllers\Admin\SupervisorController;
 use App\Http\Controllers\Admin\SupervisorManagementController;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Http\Request;
+use App\Http\Controllers\CateringInquiryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/', [StorefrontController::class, 'home'])->name('home');
+Route::get('/catering', [StorefrontController::class, 'catering'])->name('catering');
 Route::get('/menu', [StorefrontController::class, 'menu'])->name('menu');
 Route::get('/featured', [StorefrontController::class, 'featured'])->name('featured');
 Route::get('/products/{id}', [StorefrontController::class, 'product'])->name('product');
@@ -30,38 +32,15 @@ Route::get('/orders', [StorefrontController::class, 'orders'])->name('orders');
 Route::get('/orders/{id}', [StorefrontController::class, 'orderDetail'])->name('order-detail');
 Route::get('/about', [StorefrontController::class, 'about'])->name('about');
 Route::get('/contact', [StorefrontController::class, 'contact'])->name('contact');
+Route::post('/catering/inquiries', [CateringInquiryController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('catering.inquiries.store');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Email Verification Routes
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth')->group(function () {
-    // 1. Notice View: Rendered when an unverified user accesses a 'verified' route
-    Route::get('/email/verify', function () {
-        return view('auth.verify-email');
-    })->name('verification.notice');
-
-    // 2. Verification Link Handler: Link sent to user email
-    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-        $request->fulfill();
-
-        return redirect()->route('home')->with('status', 'Your email address has been verified!');
-    })->middleware('signed')->name('verification.verify');
-
-    // 3. Resend Verification Link
-    Route::post('/email/verification-notification', function (Request $request) {
-        $request->user()->sendEmailVerificationNotification();
-
-        return back()->with('message', 'A fresh verification link has been sent to your email address.');
-    })->middleware('throttle:6,1')->name('verification.send');
 });
 
 /*
@@ -86,7 +65,7 @@ Route::middleware('auth')->group(function () {
 | Customer Ordering Routes (Protected by Verified Middleware)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::post('/orders', [StorefrontController::class, 'placeOrder'])->name('orders.place');
     Route::get('/checkout', [StorefrontController::class, 'checkout'])->name('checkout');
     Route::get('/order-confirmation', [StorefrontController::class, 'orderConfirmation'])->name('order-confirmation');
@@ -98,6 +77,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::middleware(['role:marketing,marketing_admin'])->prefix('marketing')->name('marketing.')->group(function () {
+        Route::get('/dashboard', [CateringManagementController::class, 'dashboard'])->name('dashboard');
+        Route::get('/catering-bookings', [CateringManagementController::class, 'bookings'])->name('catering-bookings');
+        Route::patch('/catering-bookings/{booking}/status', [CateringManagementController::class, 'updateBookingStatus'])->name('catering-bookings.status');
+        Route::get('/catering-calendar', [CateringManagementController::class, 'calendar'])->name('catering-calendar');
+        Route::patch('/catering-calendar/{booking}', [CateringManagementController::class, 'updateCalendarBooking'])->name('catering-calendar.update');
+
+        Route::get('/catering-partners', [CateringManagementController::class, 'partners'])->name('catering-partners');
+        Route::post('/catering-partners', [CateringManagementController::class, 'storePartner'])->name('catering-partners.store');
+        Route::put('/catering-partners/{partner}', [CateringManagementController::class, 'updatePartner'])->name('catering-partners.update');
+        Route::delete('/catering-partners/{partner}', [CateringManagementController::class, 'deletePartner'])->name('catering-partners.delete');
+    });
+
+    Route::middleware(['role:marketing,marketing_admin'])->group(function () {
+        Route::get('/catering', [AdminCateringController::class, 'marketing'])->name('catering.marketing');
+        Route::get('/catering/content', [AdminCateringController::class, 'content'])->name('catering.content');
+        Route::put('/catering/content', [AdminCateringController::class, 'updateContent'])->name('catering.content.update');
+    });
 
     // 1. Marketing Admin Routes
     Route::middleware(['role:marketing'])->group(function () {

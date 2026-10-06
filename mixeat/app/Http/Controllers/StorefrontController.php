@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\SiteSetting;
+use App\Services\CateringContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 
@@ -86,6 +87,14 @@ class StorefrontController extends Controller
             'branches' => $this->branchOptions(),
             'selectedBranch' => (int) session('selected_branch', 0),
             'promotion' => $this->promotionSettings(),
+        ]);
+    }
+
+    public function catering()
+    {
+        return view('storefront.catering', [
+            'cateringContent' => app(CateringContent::class)->get(),
+            'campaignSource' => (string) request()->query('campaign', ''),
         ]);
     }
 

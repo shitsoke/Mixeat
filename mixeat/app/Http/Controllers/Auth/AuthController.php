@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -30,6 +29,11 @@ class AuthController extends Controller
             $user = Auth::user();
 
             // Role-based redirects for Admin / Internal users (Bypasses customer email verification)
+            if ($user->role === 'marketing_admin') {
+                $request->session()->regenerate();
+                return redirect()->route('admin.marketing.catering-bookings');
+            }
+
             if ($user->isMarketing()) {
                 $request->session()->regenerate();
                 return redirect()->route('admin.products.index');
@@ -38,15 +42,6 @@ class AuthController extends Controller
             if ($user->isSupervisor()) {
                 $request->session()->regenerate();
                 return redirect()->route('admin.supervisors.index');
-            }
-
-            // Check if customer has verified their email address
-            if (! $user->hasVerifiedEmail()) {
-                Auth::logout();
-
-                return back()->withErrors([
-                    'email' => 'Please verify your email address before logging in.',
-                ])->onlyInput('email');
             }
 
             $request->session()->regenerate();
@@ -86,12 +81,9 @@ class AuthController extends Controller
             'role' => 'customer',
         ]);
 
-        // Dispatches email verification notification to customer
-        event(new Registered($user));
-
         Auth::login($user);
 
-        return redirect()->route('verification.notice');
+        return redirect()->route('profile');
     }
 
     public function logout(Request $request)

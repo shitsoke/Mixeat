@@ -7,18 +7,20 @@
         <div class="mixeat-shell grid items-center gap-10 px-4 md:grid-cols-2">
             <div>
                 <span class="inline-flex rounded-full border border-[#E8DFAF] bg-[#FFF4BF] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#FFC60A]">Fresh from our kitchen</span>
-                <h1 class="mt-6 text-4xl font-black leading-tight text-[#090909] md:text-5xl lg:text-6xl">
-                    Good Food. Great Moments. <span class="text-[#FFC60A]">MixEat.</span>
+                <h1 class="mt-6 text-5xl font-black leading-[1.1] text-[#090909] md:text-6xl lg:text-6xl">
+                    <span class="block">Good Food.</span>
+                    <span class="block">Great Moments.</span>
+                    <span class="block text-[#FFC60A]">MixEat.</span>
                 </h1>
                 <p class="mt-5 max-w-xl text-lg leading-8 text-[#555555]">
                     Order your favorites online and enjoy delicious meals from your nearest MixEat branch.
                 </p>
                 <div class="mt-8 flex flex-col gap-4 sm:flex-row">
                     <a href="{{ route('menu') }}" class="inline-flex items-center justify-center rounded-full bg-[#FFC60A] px-7 py-4 text-base font-semibold text-[#090909] shadow-lg shadow-[#E5A900]/25 transition hover:bg-[#E5A900]">
-                        Order Now
+                        Order Online
                     </a>
-                    <a href="{{ route('featured') }}" class="inline-flex items-center justify-center rounded-full border border-[#FFC60A] bg-white px-7 py-4 text-base font-semibold text-[#FFC60A] transition hover:bg-[#FFF4BF]">
-                        View Menu
+                    <a href="{{ route('catering') }}" class="inline-flex items-center justify-center rounded-full border border-[#FFC60A] bg-white px-7 py-4 text-base font-semibold text-[#FFC60A] transition hover:bg-[#FFF4BF]">
+                        Book Catering
                     </a>
                 </div>
             </div>

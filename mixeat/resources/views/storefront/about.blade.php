@@ -18,7 +18,7 @@
                 </div>
 
                 <div class="overflow-hidden rounded-[32px] border border-[#E8DFAF] bg-white p-4 shadow-[0_20px_60px_rgba(229,169,0,0.12)]">
-                    <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=80" alt="MixEat restaurant" class="h-[480px] w-full rounded-[24px] object-cover">
+                    <img src="{{ asset('images/About-us.jpg') }}" alt="MixEat restaurant" class="h-[280px] sm:h-[380px] md:h-[480px] w-full rounded-[24px] object-cover">
                 </div>
             </div>
 
@@ -39,5 +39,4 @@
         </div>
     </section>
 @endsection
-
 

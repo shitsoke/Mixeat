@@ -32,6 +32,7 @@ class AuthFlowTest extends TestCase
         $user = User::query()->where('email', $email)->firstOrFail();
         $this->assertNotNull($user);
         $this->assertTrue(Hash::check('Password123!', $user->password));
+        $this->assertNull($user->email_verified_at, 'Registration does not require email verification.');
 
         $this->post('/logout');
 
@@ -42,6 +43,7 @@ class AuthFlowTest extends TestCase
 
         $loginResponse->assertRedirect('/profile');
         $this->assertAuthenticatedAs($user);
+        $this->get('/checkout')->assertOk();
 
         $this->get('/profile')
             ->assertSee('Maria Cruz')
@@ -67,5 +69,7 @@ class AuthFlowTest extends TestCase
         $this->get('/profile')
             ->assertSee('Alpha Omega')
             ->assertSee('09179998888');
+
+        $this->get('/email/verify')->assertNotFound();
     }
 }

@@ -11,13 +11,49 @@
             font-family: system-ui, -apple-system, sans-serif;
             color: #1A1A1A;
         }
-        .mixeat-brand {
-            background-color: #FFC107;
-            color: #000;
+        .admin-navbar .container-fluid {
+            max-width: 1680px;
+        }
+        .admin-navbar .navbar-collapse {
+            align-items: center;
+            gap: 1rem;
+        }
+        .admin-navbar .navbar-nav {
+            flex-wrap: wrap;
+            column-gap: 0.2rem;
+        }
+        .admin-navbar .nav-link {
+            color: #555;
+            font-size: 0.9rem;
+            font-weight: 650;
+            white-space: nowrap;
+        }
+        .admin-navbar .nav-link:hover,
+        .admin-navbar .nav-link:focus {
+            color: #b78300;
+        }
+        .admin-navbar .navbar-brand img {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            object-fit: contain;
+        }
+        .admin-navbar .brand-name {
+            color: #090909;
+            font-size: 1.25rem;
             font-weight: 800;
-            padding: 4px 12px;
-            border-radius: 8px;
-            text-decoration: none;
+            letter-spacing: 0.14em;
+        }
+        .admin-navbar .admin-account {
+            white-space: nowrap;
+        }
+        @media (max-width: 1399.98px) {
+            .admin-navbar .navbar-collapse {
+                padding-top: 0.75rem;
+            }
+            .admin-navbar .navbar-nav {
+                align-items: flex-start;
+            }
         }
         .btn-mixeat-yellow {
             background-color: #FFC107;
@@ -49,26 +85,38 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg bg-white border-bottom border-warning border-opacity-25 py-3 mb-4">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-                <span class="mixeat-brand">MIX EAT</span>
+    <nav class="navbar navbar-expand-xxl admin-navbar bg-white border-bottom border-warning border-opacity-25 py-3 mb-4">
+        <div class="container-fluid px-3 px-xxl-4">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="{{ route('home') }}" aria-label="MixEat home">
+                <img src="{{ asset('images/mixeat.jpg') }}" alt="">
+                <span class="brand-name">MIXEAT</span>
             </a>
-            
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-3">
-                    @if(auth()->user()->isMarketing())
-                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.branches.index') }}">Branches</a></li>
-                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.products.index') }}">Master Menu</a></li>
-                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.promotion') }}">Promotions</a></li>
-                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.cms.about') }}">About Page</a></li>
-                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.cms.contact') }}">Contact Page</a></li>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#admin-navigation" aria-controls="admin-navigation" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="admin-navigation">
+                <ul class="navbar-nav me-auto ms-xxl-3">
+                    @if(auth()->user()->role === 'marketing_admin')
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('home') }}">Home</a></li>
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.marketing.catering-bookings') }}">Catering Bookings</a></li>
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.marketing.catering-calendar') }}">Catering Event Calendar</a></li>
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.catering.content') }}">Catering Content</a></li>
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.marketing.catering-partners') }}">Catering Partners</a></li>
+                    @elseif(auth()->user()->isMarketing())
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('home') }}">Home</a></li>
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.catering.marketing') }}">Catering</a></li>
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.marketing.catering-bookings') }}">Catering Bookings</a></li>
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.marketing.catering-calendar') }}">Catering Event Calendar</a></li>
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.catering.content') }}">Catering Content</a></li>
+                        <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{{ route('admin.marketing.catering-partners') }}">Catering Clients &amp; Partners</a></li>
                     @elseif(auth()->user()->isSupervisor())
                         <li class="nav-item"><a class="nav-link fw-bold text-dark active" href="{{ route('admin.supervisors.index') }}">Branch Menu Availability</a></li>
                     @endif
                 </ul>
 
-                <div class="d-flex align-items-center">
+                <div class="admin-account d-flex align-items-center mt-3 mt-xxl-0">
                     <span class="me-3 fw-medium">
                         {{ auth()->user()->name }} 
                         <span class="badge-mixeat-role ms-1">{{ auth()->user()->role }}</span>

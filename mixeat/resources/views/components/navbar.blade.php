@@ -4,28 +4,32 @@
         ['label' => 'Menu', 'route' => 'menu'],
         ['label' => 'Featured', 'route' => 'featured'],
         ['label' => 'Branches', 'route' => 'branches'],
+        ['label' => 'Catering', 'route' => 'catering'],
         ['label' => 'About', 'route' => 'about'],
         ['label' => 'Contact', 'route' => 'contact'],
     ];
 @endphp
 @php($cartCount = collect(session('cart', []))->sum('quantity'))
+@php($isMarketingAdmin = auth()->check() && (auth()->user()->role === 'marketing_admin' || auth()->user()->isMarketing() || auth()->user()->is_admin))
 
 <header class="sticky top-0 z-50 border-b border-[#E8DFAF] bg-white/90 backdrop-blur-md">
     <div class="mixeat-shell flex items-center justify-between gap-4 py-3">
         <!-- Logo & Brand Name -->
-        <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5" aria-label="MixEat home">
+        <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5 no-underline" aria-label="MixEat home">
             <img src="{{ asset('images/mixeat.jpg') }}" alt="MixEat" class="h-10 w-10 rounded-xl object-contain" />
             <div class="text-xl font-extrabold tracking-[0.14em] text-[#090909]">MIXEAT</div>
         </a>
 
         <!-- Main Navigation Links (Increased text size & bold weight) -->
-        <nav class="hidden items-center gap-6 lg:flex">
-            @foreach ($navItems as $item)
-                <a href="{{ route($item['route']) }}" class="text-sm font-bold text-[#555555] transition hover:text-[#FFC60A] {{ request()->routeIs($item['route']) ? 'text-[#FFC60A]' : '' }}">
-                    {{ $item['label'] }}
-                </a>
-            @endforeach
-        </nav>
+        @unless ($isMarketingAdmin)
+            <nav class="hidden items-center gap-6 lg:flex">
+                @foreach ($navItems as $item)
+                    <a href="{{ route($item['route']) }}" class="text-sm font-bold text-[#555555] no-underline transition hover:text-[#FFC60A] {{ request()->routeIs($item['route']) ? 'text-[#FFC60A]' : '' }}">
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+            </nav>
+        @endunless
 
         <!-- Right Side Actions & Admin Control Pills -->
         <div class="flex items-center gap-3">
@@ -52,13 +56,21 @@
 
             {{-- Compact Admin Pill Buttons --}}
             @auth
-                @if (auth()->user()->is_admin || auth()->user()->role === 'marketing')
+                @if (auth()->user()->role === 'marketing_admin')
+                    <div class="hidden items-center gap-2 md:flex">
+                        <a href="{{ route('admin.marketing.catering-bookings') }}" class="rounded-full border border-[#E8DFAF] bg-white px-3.5 py-1.5 text-xs font-bold text-[#090909] no-underline transition hover:bg-[#FFF4BF]">Catering Bookings</a>
+                        <a href="{{ route('admin.marketing.catering-partners') }}" class="rounded-full border border-[#E8DFAF] bg-white px-3.5 py-1.5 text-xs font-bold text-[#090909] no-underline transition hover:bg-[#FFF4BF]">Catering Partners</a>
+                    </div>
+                @elseif (auth()->user()->is_admin || auth()->user()->role === 'marketing')
                     <div class="hidden items-center gap-2 md:flex">
                         <a href="{{ route('admin.promotion') }}" class="rounded-full border border-[#E8DFAF] bg-white px-3.5 py-1.5 text-xs font-bold text-[#090909] transition hover:bg-[#FFF4BF]">
                             Promotion
                         </a>
                         <a href="{{ route('admin.branches.index') }}" class="rounded-full border border-[#E8DFAF] bg-white px-3.5 py-1.5 text-xs font-bold text-[#090909] transition hover:bg-[#FFF4BF]">
                             Branches
+                        </a>
+                        <a href="{{ route('admin.catering.marketing') }}" class="rounded-full border border-[#E8DFAF] bg-white px-3.5 py-1.5 text-xs font-bold text-[#090909] transition hover:bg-[#FFF4BF]">
+                            Catering
                         </a>
                         <a href="{{ route('admin.supervisors.manage') }}" class="rounded-full border border-[#E8DFAF] bg-white px-3.5 py-1.5 text-xs font-bold text-[#090909] transition hover:bg-[#FFF4BF]">
                             Supervisors
@@ -68,9 +80,9 @@
                         </a>
                     </div>
                 @elseif (auth()->user()->isSupervisor())
-                    <a href="{{ route('admin.supervisors.index') }}" class="hidden rounded-full border border-[#FFC60A] px-4 py-2 text-xs font-bold text-[#090909] transition hover:bg-[#FFF4BF] md:inline-flex">
-                        Dashboard
-                    </a>
+                    <div class="hidden items-center gap-2 md:flex">
+                        <a href="{{ route('admin.supervisors.index') }}" class="rounded-full border border-[#FFC60A] px-4 py-2 text-xs font-bold text-[#090909] transition hover:bg-[#FFF4BF]">Dashboard</a>
+                    </div>
                 @endif
 
                 <a href="{{ route('profile') }}" class="hidden items-center gap-1.5 rounded-full bg-[#FFC60A] px-4 py-2.5 text-xs font-bold text-[#090909] shadow-md shadow-[#E5A900]/20 transition hover:bg-[#E5A900] md:inline-flex">
@@ -92,13 +104,15 @@
     </div>
 
     <!-- Mobile Drawer / Secondary Nav -->
-    <div id="mobile-navigation" class="hidden border-t border-[#E8DFAF] bg-white px-4 py-3 lg:hidden">
-        <div class="mixeat-shell flex items-center gap-2 overflow-x-auto pb-1">
-            @foreach ($navItems as $item)
-                <a href="{{ route($item['route']) }}" class="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold {{ request()->routeIs($item['route']) ? 'bg-[#FFF4BF] text-[#FFC60A]' : 'text-[#555555]' }}" data-menu-link>
-                    {{ $item['label'] }}
-                </a>
-            @endforeach
+    @unless ($isMarketingAdmin)
+        <div id="mobile-navigation" class="hidden border-t border-[#E8DFAF] bg-white px-4 py-3 lg:hidden">
+            <div class="mixeat-shell flex items-center gap-2 overflow-x-auto pb-1">
+                @foreach ($navItems as $item)
+                    <a href="{{ route($item['route']) }}" class="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold no-underline {{ request()->routeIs($item['route']) ? 'bg-[#FFF4BF] text-[#FFC60A]' : 'text-[#555555]' }}" data-menu-link>
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+            </div>
         </div>
-    </div>
+    @endunless
 </header>

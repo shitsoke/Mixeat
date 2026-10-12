@@ -22,9 +22,23 @@
                     </div>
                 @endif
 
-                <form action="{{ route('profile.update') }}" method="POST" class="grid gap-5 md:grid-cols-2">
+                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="grid gap-5 md:grid-cols-2">
                     @csrf
                     @method('PUT')
+                    <div class="flex items-center gap-4 md:col-span-2">
+                        @if ($user->profile_picture)
+                            <img src="{{ asset('storage/'.$user->profile_picture) }}" alt="{{ $user->name }}'s current profile picture" class="h-16 w-16 rounded-full object-cover">
+                        @else
+                            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#FFC60A] to-[#E5A900] text-xl font-black text-white">
+                                {{ strtoupper(substr((string) ($user->first_name ?: $user->name), 0, 1) . substr((string) $user->last_name, 0, 1)) }}
+                            </div>
+                        @endif
+                        <div class="flex-1">
+                            <label for="profile_picture" class="mb-2 block text-sm font-semibold text-[#555555]">Profile Picture</label>
+                            <input id="profile_picture" type="file" name="profile_picture" accept="image/jpeg,image/png,image/webp" class="w-full rounded-2xl border border-[#E8DFAF] bg-[#FFF9E6] px-4 py-3 text-sm text-[#090909] focus:outline-none" />
+                            <p class="mt-1 text-xs text-[#777777]">JPEG, PNG, or WebP; maximum 5 MB.</p>
+                        </div>
+                    </div>
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-[#555555]">First Name</label>
                         <input type="text" name="first_name" value="{{ old('first_name', $user->first_name) }}" required class="w-full rounded-2xl border border-[#E8DFAF] bg-[#FFF9E6] px-4 py-3 text-sm text-[#090909] focus:outline-none" />

@@ -38,6 +38,17 @@
                         <div class="mt-4 space-y-3 text-sm text-[#555555]">
                             <div class="flex items-center justify-between"><span>Order Number</span><span class="font-semibold text-[#090909]">{{ $order['id'] }}</span></div>
                             <div class="flex items-center justify-between"><span>Branch</span><span class="font-semibold text-[#090909]">{{ $order['branch'] }}</span></div>
+                            <div class="flex items-center justify-between"><span>Order Type</span><span class="font-semibold text-[#090909]">{{ $order['type'] }}</span></div>
+                            @if (!empty($order['pickup_at']))
+                                <div class="flex items-center justify-between"><span>Pickup</span><span class="font-semibold text-[#090909]">{{ $order['pickup_at'] }}</span></div>
+                            @endif
+                            @if (!empty($order['delivery_method']))
+                                <div class="flex items-center justify-between"><span>Delivery Method</span><span class="font-semibold text-[#090909]">{{ $order['delivery_method'] }}</span></div>
+                                <div class="flex items-center justify-between gap-4"><span>Delivery Address</span><span class="text-right font-semibold text-[#090909]">{{ $order['delivery_address'] }}</span></div>
+                            @endif
+                            @if (!empty($order['payment_method']))
+                                <div class="flex items-center justify-between"><span>Payment</span><span class="font-semibold text-[#090909]">{{ $order['payment_method'] }}</span></div>
+                            @endif
                             <div class="flex items-center justify-between"><span>Status</span><span class="font-semibold text-[#090909]">{{ $order['status'] }}</span></div>
                             <div class="flex items-center justify-between"><span>Total</span><span class="font-semibold text-[#090909]">&#8369;{{ number_format($order['total'], 2) }}</span></div>
                         </div>
@@ -54,5 +65,4 @@
         </div>
     </section>
 @endsection
-
 

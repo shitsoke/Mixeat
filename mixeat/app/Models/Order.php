@@ -16,6 +16,15 @@ class Order extends Model
         'status',
         'type',
         'total',
+        'pickup_at',
+        'delivery_method',
+        'delivery_address',
+        'payment_method',
+        'gcash_reference_number',
+    ];
+
+    protected $casts = [
+        'pickup_at' => 'datetime',
     ];
 
     public function user()

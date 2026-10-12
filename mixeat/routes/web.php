@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Marketing\CateringManagementController;
 use App\Http\Controllers\Admin\SupervisorController;
 use App\Http\Controllers\Admin\SupervisorManagementController;
 use App\Http\Controllers\CateringInquiryController;
+use App\Http\Controllers\FeedbackController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,9 +18,11 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/', [StorefrontController::class, 'home'])->name('home');
+Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
 Route::get('/catering', [StorefrontController::class, 'catering'])->name('catering');
 Route::get('/menu', [StorefrontController::class, 'menu'])->name('menu');
 Route::get('/featured', [StorefrontController::class, 'featured'])->name('featured');
+Route::get('/featured/{promotion}', [StorefrontController::class, 'featuredPromotion'])->name('featured.show');
 Route::get('/products/{id}', [StorefrontController::class, 'product'])->name('product');
 Route::post('/cart/{id}', [StorefrontController::class, 'addToCart'])->name('cart.add');
 Route::patch('/cart/{id}/quantity', [StorefrontController::class, 'updateCartQuantity'])->name('cart.quantity');
@@ -28,6 +31,7 @@ Route::get('/branches', [StorefrontController::class, 'branches'])->name('branch
 Route::post('/branches/select', [StorefrontController::class, 'selectBranchFromDropdown'])->name('branches.select-dropdown');
 Route::post('/branches/{branch}/select', [StorefrontController::class, 'selectBranch'])->name('branches.select');
 Route::get('/cart', [StorefrontController::class, 'cart'])->name('cart');
+Route::get('/orders/live', [StorefrontController::class, 'liveOrders'])->middleware('auth')->name('orders.live');
 Route::get('/orders', [StorefrontController::class, 'orders'])->name('orders');
 Route::get('/orders/{id}', [StorefrontController::class, 'orderDetail'])->name('order-detail');
 Route::get('/about', [StorefrontController::class, 'about'])->name('about');
@@ -39,6 +43,14 @@ Route::post('/catering/inquiries', [CateringInquiryController::class, 'store'])
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirectToProvider'])
+        ->whereIn('provider', ['google', 'facebook'])
+        ->name('social.redirect');
+    Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback'])
+        ->whereIn('provider', ['google', 'facebook'])
+        ->name('social.callback');
+    Route::get('/oauth/{provider}/callback', [AuthController::class, 'handleProviderCallback'])
+        ->whereIn('provider', ['google', 'facebook']);
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 });
@@ -103,6 +115,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/promotion', [AdminController::class, 'promotion'])->name('promotion');
         Route::put('/promotion', [AdminController::class, 'updatePromotion'])->name('promotion.update');
 
+        Route::get('/promotions', [AdminController::class, 'promotions'])->name('promotions.index');
+        Route::get('/promotions/create', [AdminController::class, 'createPromotion'])->name('promotions.create');
+        Route::post('/promotions', [AdminController::class, 'storePromotion'])->name('promotions.store');
+        Route::get('/promotions/{promotion}/edit', [AdminController::class, 'editPromotion'])->name('promotions.edit');
+        Route::put('/promotions/{promotion}', [AdminController::class, 'updatePromotionPost'])->name('promotions.update');
+        Route::delete('/promotions/{promotion}', [AdminController::class, 'destroyPromotion'])->name('promotions.destroy');
+
         // Master Menu Products
         Route::get('/products', [AdminController::class, 'index'])->name('products.index');
         Route::get('/products/create', [AdminController::class, 'create'])->name('products.create');
@@ -135,6 +154,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // 2. Branch Supervisor Routes
     Route::middleware(['role:supervisor'])->group(function () {
         Route::get('/supervisors', [SupervisorController::class, 'index'])->name('supervisors.index');
+        Route::get('/supervisors/orders/live', [SupervisorController::class, 'liveOrders'])->name('supervisors.orders.live');
         Route::get('/supervisors/export-daily-sales', [SupervisorController::class, 'exportDailySales'])->name('supervisors.export-daily-sales');
         Route::patch('/supervisors/{product}/toggle', [SupervisorController::class, 'toggleStatus'])->name('supervisors.toggle');
         

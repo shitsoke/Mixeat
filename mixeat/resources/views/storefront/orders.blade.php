@@ -42,6 +42,20 @@
                             <div class="py-4">
                                 <p class="text-xs font-bold uppercase text-[#777777]">Branch Location</p>
                                 <p class="text-sm font-bold text-[#090909]">{{ $order->branch?->name ?? 'MixEat Branch' }}</p>
+                                <p class="mt-2 text-sm font-semibold text-[#555555]">{{ $order->type }}</p>
+                                @if ($order->pickup_at)
+                                    <p class="mt-1 text-sm text-[#555555]">Pickup: {{ $order->pickup_at->format('M j, Y g:i A') }}</p>
+                                @endif
+                                @if ($order->delivery_method)
+                                    <p class="mt-1 text-sm text-[#555555]">Delivery: {{ $order->delivery_method }}</p>
+                                    <p class="mt-1 text-sm text-[#555555]">{{ $order->delivery_address }}</p>
+                                @endif
+                                @if ($order->payment_method)
+                                    <p class="mt-1 text-sm text-[#555555]">Payment: {{ $order->payment_method }}</p>
+                                @endif
+                                @if ($order->gcash_reference_number)
+                                    <p class="mt-1 text-sm text-[#555555]">GCash reference: {{ $order->gcash_reference_number }}</p>
+                                @endif
 
                                 <div class="mt-4 flex items-center justify-between">
                                     <span class="text-xs font-bold uppercase text-[#777777]">Total Amount</span>
@@ -97,6 +111,11 @@
                                 <span>{{ $order->created_at ? $order->created_at->format('M d, Y') : 'N/A' }}</span>
                                 <span class="h-1.5 w-1.5 rounded-full bg-[#E8DFAF]"></span>
                                 <span>{{ $order->branch?->name ?? 'MixEat' }}</span>
+                                @if ($order->pickup_at)
+                                    <span>Pickup: {{ $order->pickup_at->format('M j, Y g:i A') }}</span>
+                                @elseif ($order->delivery_method)
+                                    <span>{{ $order->delivery_method }} delivery</span>
+                                @endif
                             </div>
                         </div>
                         <div class="flex items-center gap-4">

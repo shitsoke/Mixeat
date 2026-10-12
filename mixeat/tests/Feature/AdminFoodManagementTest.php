@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\Product;
+use App\Models\Promotion;
 use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -82,6 +83,86 @@ class AdminFoodManagementTest extends TestCase
         $this->assertSame('299', SiteSetting::where('key', 'promotion_price')->value('value'));
         $this->assertStringStartsWith('promotions/', $image);
         Storage::disk('public')->assertExists($image);
+    }
+
+    public function test_marketing_can_manage_multiple_promotions(): void
+    {
+        Storage::fake('public');
+        $marketing = User::factory()->create(['role' => 'marketing', 'is_admin' => false]);
+
+        $this->actingAs($marketing)
+            ->post('/admin/promotions', [
+                'label' => 'Limited time',
+                'title' => 'MixEat meal deal',
+                'description' => 'A special offer for MixEat customers.',
+                'details' => 'Available for a limited time. Terms and conditions apply.',
+                'price' => 249,
+                'button_text' => 'View menu',
+                'button_url' => 'https://example.com/menu',
+                'image' => UploadedFile::fake()->create('deal.jpg', 100, 'image/jpeg'),
+                'is_active' => 1,
+            ])
+            ->assertRedirect('/admin/promotions');
+
+        $promotion = Promotion::where('title', 'MixEat meal deal')->firstOrFail();
+        $this->assertTrue($promotion->is_active);
+        Storage::disk('public')->assertExists($promotion->image);
+
+        $this->actingAs($marketing)
+            ->put('/admin/promotions/'.$promotion->id, [
+                'label' => 'Updated offer',
+                'title' => 'Updated meal deal',
+                'description' => 'Updated details.',
+                'details' => 'Updated full promotion terms.',
+                'price' => 199,
+                'button_text' => 'Order now',
+                'button_url' => 'https://example.com/order',
+                'is_active' => 0,
+            ])
+            ->assertRedirect('/admin/promotions');
+
+        $this->assertDatabaseHas('promotions', [
+            'id' => $promotion->id,
+            'title' => 'Updated meal deal',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($marketing)
+            ->delete('/admin/promotions/'.$promotion->id)
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('promotions', ['id' => $promotion->id]);
+    }
+
+    public function test_featured_page_lists_published_promotions_only(): void
+    {
+        $published = Promotion::create([
+            'title' => 'Published offer',
+            'description' => 'Available to customers.',
+            'details' => 'Full published offer conditions.',
+            'image' => 'promotions/published.jpg',
+            'is_active' => true,
+        ]);
+        Promotion::create([
+            'title' => 'Draft offer',
+            'description' => 'Not ready for customers.',
+            'details' => 'Draft offer conditions.',
+            'image' => 'promotions/draft.jpg',
+            'is_active' => false,
+        ]);
+
+        $this->get('/featured')
+            ->assertOk()
+            ->assertSee('Published offer')
+            ->assertSee('View details')
+            ->assertDontSee('Draft offer');
+
+        $this->get('/featured/'.$published->id)
+            ->assertOk()
+            ->assertSee('Full published offer conditions.');
+
+        $this->get('/featured/'.Promotion::where('title', 'Draft offer')->value('id'))
+            ->assertNotFound();
     }
 
     public function test_admin_can_add_edit_and_delete_a_branch(): void

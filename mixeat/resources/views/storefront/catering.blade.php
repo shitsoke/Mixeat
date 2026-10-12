@@ -29,12 +29,41 @@
                         data-package-name="{{ $package['name'] ?? $highlight }}"
                         data-package-description="{{ $package['description'] ?? 'Contact us to learn more about this catering service.' }}"
                         data-package-price="{{ is_numeric($package['price'] ?? null) ? number_format((float) $package['price'], 2, '.', '') : '' }}"
+                        @if (str_contains(strtolower($highlight), 'party trays'))
+                            data-party-trays-toggle
+                            aria-controls="party-trays-menu"
+                            aria-expanded="{{ request('service') === 'Party Trays' ? 'true' : 'false' }}"
+                        @endif
                     >
                         <span class="text-3xl" aria-hidden="true">{{ ['🍱', '🥘', '🚚'][$index] ?? '✨' }}</span>
                         <span class="font-bold text-[#090909]">{{ $highlight }}</span>
                     </button>
                 @endforeach
             </div>
+
+            @if ($partyTrays->isNotEmpty())
+                <section id="party-trays-menu" class="mb-12 {{ request('service') === 'Party Trays' ? '' : 'hidden' }}" aria-labelledby="party-trays-heading">
+                    <div class="mb-6">
+                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#E5A900]">Catering menu</p>
+                        <h2 id="party-trays-heading" class="mt-2 text-3xl font-bold text-[#090909]">Party Trays &amp; Buffet Setups</h2>
+                        <p class="mt-3 max-w-2xl text-base leading-7 text-[#555555]">Choose from MixEat favorites for your gathering. Select a tray to start a catering inquiry and our team will help with portions and pricing.</p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        @foreach ($partyTrays as $partyTray)
+                            <article class="overflow-hidden rounded-[20px] border border-[#E8DFAF] bg-white shadow-sm">
+                                <img src="{{ $partyTray->imageUrl() }}" alt="{{ $partyTray->name }}" class="aspect-[4/3] w-full object-cover">
+                                <div class="p-5">
+                                    <h3 class="text-lg font-bold text-[#090909]">{{ $partyTray->name }}</h3>
+                                    <p class="mt-2 min-h-12 text-sm leading-6 text-[#555555]">{{ $partyTray->description }}</p>
+                                    <a href="{{ route('catering', ['service' => 'Party Trays', 'package' => $partyTray->name]) }}#catering-inquiry" class="mt-4 inline-flex rounded-full bg-[#FFC60A] px-5 py-2.5 text-sm font-semibold text-[#090909] transition hover:bg-[#E5A900]">
+                                        Request this tray
+                                    </a>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
 
             <div class="mb-12 rounded-[20px] border border-[#E8DFAF] bg-white px-6 py-12 md:px-10">
                 <p class="mb-6 text-center text-xs font-bold tracking-[0.16em] text-[#777777]">OUR CATERING CLIENTS &amp; PARTNERS</p>
@@ -127,7 +156,7 @@
                                 <select id="catering-service" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" name="service_type" required>
                                     <option value="">Choose a service</option>
                                     @foreach (['Packed Meals', 'Party Trays', 'Full-Service Catering'] as $service)
-                                        <option value="{{ $service }}" @selected(old('service_type') === $service)>{{ $service }}</option>
+                                        <option value="{{ $service }}" @selected(old('service_type', request('service')) === $service)>{{ $service }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -144,8 +173,15 @@
                                 <select id="catering-package" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" name="package_preference">
                                     <option value="">No preference yet</option>
                                     @foreach ($cateringContent['packages'] as $package)
-                                        <option value="{{ $package['name'] }}" @selected(old('package_preference') === $package['name'])>{{ $package['name'] }}</option>
+                                        <option value="{{ $package['name'] }}" @selected(old('package_preference', request('package')) === $package['name'])>{{ $package['name'] }}</option>
                                     @endforeach
+                                    @if ($partyTrays->isNotEmpty())
+                                        <optgroup label="Party Trays &amp; Buffet Setups">
+                                            @foreach ($partyTrays as $partyTray)
+                                                <option value="{{ $partyTray->name }}" @selected(old('package_preference', request('package')) === $partyTray->name)>{{ $partyTray->name }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endif
                                 </select>
                             </div>
                             <div class="md:col-span-2">

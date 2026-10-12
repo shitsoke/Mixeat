@@ -46,6 +46,29 @@ class SupervisorController extends Controller
         return view('admin.supervisors.index', compact('branch', 'products', 'orders', 'dailySummary'));
     }
 
+    public function liveOrders(Request $request)
+    {
+        $user = $request->user();
+        abort_unless($user && $user->isSupervisor() && $user->branch_id, 403, 'Unauthorized access or no branch assigned.');
+
+        $branch = $user->branch;
+        $orders = Order::where('branch_id', $branch->id)->latest()->get();
+        $todayQuery = Order::where('branch_id', $branch->id)
+            ->whereDate('created_at', Carbon::today('Asia/Manila'));
+
+        $dailySummary = [
+            'total_orders' => (clone $todayQuery)->count(),
+            'preparing_count' => (clone $todayQuery)->where('status', 'Preparing')->count(),
+            'ready_count' => (clone $todayQuery)->where('status', 'Ready for Pickup')->count(),
+            'total_revenue' => (clone $todayQuery)->whereIn('status', ['Preparing', 'Ready for Pickup', 'Completed'])->sum('total'),
+        ];
+
+        return response()->json([
+            'orders_html' => view('admin.supervisors.partials.order-rows', compact('orders'))->render(),
+            'daily_summary' => $dailySummary,
+        ]);
+    }
+
     public function exportDailySales(Request $request): StreamedResponse
     {
         $user = $request->user();

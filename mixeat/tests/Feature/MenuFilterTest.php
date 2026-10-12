@@ -10,15 +10,18 @@ class MenuFilterTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee(route('menu', ['category' => 'Food Trays']), false);
+            ->assertSee(route('menu', ['category' => 'Food Bowls']), false);
     }
 
-    public function test_menu_filters_products_by_category_and_availability(): void
+    public function test_food_bowls_category_shows_only_food_bowl_products(): void
     {
         $this->get('/menu?category=Food Bowls&availability=available')
             ->assertOk()
-            ->assertSee('Iced Tea')
-            ->assertSee('Soft Drink')
+            ->assertSee('Food Bowls')
+            ->assertDontSee('Meals')
+            ->assertSee('Carbonara')
+            ->assertDontSee('Iced Tea')
+            ->assertDontSee('Soft Drink')
             ->assertDontSee('Chicken Meal')
             ->assertDontSee('Cheesy Burger');
     }
@@ -28,7 +31,7 @@ class MenuFilterTest extends TestCase
         $response = $this->get('/menu?price=under-100&sort=price-low');
 
         $response->assertOk()
-            ->assertSee('French Fries')
+            ->assertDontSee('French Fries')
             ->assertSee('Iced Tea')
             ->assertSee('Soft Drink')
             ->assertDontSee('Chicken Meal')

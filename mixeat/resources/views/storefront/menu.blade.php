@@ -7,7 +7,7 @@
         <div class="mixeat-shell px-4">
             <div class="mb-8 text-center md:text-left">
                 <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#FFC60A]">Our Menu</p>
-                <h1 class="mt-2 text-4xl font-black text-[#090909]">Fresh picks for every craving.</h1>
+                <h1 class="mt-2 text-4xl font-black text-[#090909]">{{ $filters['category'] === 'All' ? 'Fresh picks for every craving.' : $filters['category'] }}</h1>
             </div>
 
             <div class="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -26,9 +26,6 @@
                             @foreach($categories as $category)
                                 <a href="{{ route('menu', array_merge(request()->query(), ['category' => $category])) }}" class="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-left text-sm font-medium {{ $filters['category'] === $category ? 'bg-[#FFF4BF] text-[#FFC60A]' : 'text-[#090909] hover:bg-[#FFF9E6]' }}">
                                     <span>{{ $category }}</span>
-                                    @if($loop->first)
-                                        <span class="rounded-full bg-[#FFC60A] px-2 py-0.5 text-[10px] font-bold text-[#090909]">12</span>
-                                    @endif
                                 </a>
                             @endforeach
                         </div>
@@ -73,20 +70,26 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="text-sm font-semibold text-[#555555]">Filter:</span>
-                            <a href="{{ route('menu') }}" class="rounded-full bg-[#FFF4BF] px-4 py-2 text-sm font-semibold text-[#FFC60A]">All</a>
-                            <a href="{{ route('menu', array_merge(request()->query(), ['category' => 'Meals'])) }}" class="rounded-full border border-[#E8DFAF] px-4 py-2 text-sm font-semibold text-[#555555]">Meals</a>
+                            @foreach (['All', 'Food Bowls'] as $quickCategory)
+                                <a href="{{ route('menu', array_merge(request()->query(), ['category' => $quickCategory])) }}" class="rounded-full px-4 py-2 text-sm font-semibold {{ $filters['category'] === $quickCategory ? 'bg-[#FFF4BF] text-[#A87900]' : 'border border-[#E8DFAF] text-[#555555]' }}">{{ $quickCategory }}</a>
+                            @endforeach
                         </div>
                     </div>
 
-                    <div class="product-grid">
-                        @foreach ($products as $product)
-                            <x-product-card :product="$product" />
-                        @endforeach
-                    </div>
+                    @if (count($products))
+                        <div class="product-grid">
+                            @foreach ($products as $product)
+                                <x-product-card :product="$product" />
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="rounded-[28px] border border-[#E8DFAF] bg-white p-8 text-center">
+                            <h2 class="text-xl font-bold text-[#090909]">No products found</h2>
+                            <p class="mt-2 text-sm text-[#555555]">Try another category or adjust your filters.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
     </section>
 @endsection
-
-

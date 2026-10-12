@@ -1,10 +1,11 @@
 ﻿@php
     $navItems = [
         ['label' => 'Home', 'route' => 'home'],
-        ['label' => 'Menu', 'route' => 'menu'],
+        ['label' => 'Food Bowls', 'route' => 'menu', 'parameters' => ['category' => 'Food Bowls']],
         ['label' => 'Featured', 'route' => 'featured'],
         ['label' => 'Branches', 'route' => 'branches'],
         ['label' => 'Catering', 'route' => 'catering'],
+        ['label' => 'Feedback', 'route' => 'feedback.index'],
         ['label' => 'About', 'route' => 'about'],
         ['label' => 'Contact', 'route' => 'contact'],
     ];
@@ -24,7 +25,7 @@
         @unless ($isMarketingAdmin)
             <nav class="hidden items-center gap-6 lg:flex">
                 @foreach ($navItems as $item)
-                    <a href="{{ route($item['route']) }}" class="text-sm font-bold text-[#555555] no-underline transition hover:text-[#FFC60A] {{ request()->routeIs($item['route']) ? 'text-[#FFC60A]' : '' }}">
+                    <a href="{{ route($item['route'], $item['parameters'] ?? []) }}" class="text-sm font-bold text-[#555555] no-underline transition hover:text-[#FFC60A] {{ request()->routeIs($item['route']) ? 'text-[#FFC60A]' : '' }}">
                         {{ $item['label'] }}
                     </a>
                 @endforeach
@@ -63,8 +64,8 @@
                     </div>
                 @elseif (auth()->user()->is_admin || auth()->user()->role === 'marketing')
                     <div class="hidden items-center gap-2 md:flex">
-                        <a href="{{ route('admin.promotion') }}" class="rounded-full border border-[#E8DFAF] bg-white px-3.5 py-1.5 text-xs font-bold text-[#090909] transition hover:bg-[#FFF4BF]">
-                            Promotion
+                        <a href="{{ route('admin.promotions.index') }}" class="rounded-full border border-[#E8DFAF] bg-white px-3.5 py-1.5 text-xs font-bold text-[#090909] transition hover:bg-[#FFF4BF]">
+                            Promotions
                         </a>
                         <a href="{{ route('admin.branches.index') }}" class="rounded-full border border-[#E8DFAF] bg-white px-3.5 py-1.5 text-xs font-bold text-[#090909] transition hover:bg-[#FFF4BF]">
                             Branches
@@ -108,7 +109,7 @@
         <div id="mobile-navigation" class="hidden border-t border-[#E8DFAF] bg-white px-4 py-3 lg:hidden">
             <div class="mixeat-shell flex items-center gap-2 overflow-x-auto pb-1">
                 @foreach ($navItems as $item)
-                    <a href="{{ route($item['route']) }}" class="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold no-underline {{ request()->routeIs($item['route']) ? 'bg-[#FFF4BF] text-[#FFC60A]' : 'text-[#555555]' }}" data-menu-link>
+                    <a href="{{ route($item['route'], $item['parameters'] ?? []) }}" class="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold no-underline {{ request()->routeIs($item['route']) ? 'bg-[#FFF4BF] text-[#FFC60A]' : 'text-[#555555]' }}" data-menu-link>
                         {{ $item['label'] }}
                     </a>
                 @endforeach

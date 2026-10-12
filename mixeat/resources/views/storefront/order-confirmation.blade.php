@@ -28,6 +28,33 @@
                             <p class="text-sm font-bold uppercase tracking-[0.12em] text-[#555555]">Estimated preparation time</p>
                             <p class="mt-2 text-lg font-semibold text-[#090909]">{{ $order['time'] }}</p>
                         </div>
+                        @if (($order['type'] ?? 'Pickup') === 'Pickup' && !empty($order['pickup_at']))
+                            <div>
+                                <p class="text-sm font-bold uppercase tracking-[0.12em] text-[#555555]">Pickup date and time</p>
+                                <p class="mt-2 text-lg font-semibold text-[#090909]">{{ $order['pickup_at'] }}</p>
+                            </div>
+                        @endif
+                        @if (!empty($order['delivery_method']))
+                            <div>
+                                <p class="text-sm font-bold uppercase tracking-[0.12em] text-[#555555]">Delivery method</p>
+                                <p class="mt-2 text-lg font-semibold text-[#090909]">{{ $order['delivery_method'] }}</p>
+                                @if ($order['delivery_method'] === 'Maxim')
+                                    <p class="mt-1 text-sm text-[#555555]">The Maxim delivery fee is paid separately by you.</p>
+                                @endif
+                            </div>
+                        @endif
+                        @if (!empty($order['payment_method']))
+                            <div>
+                                <p class="text-sm font-bold uppercase tracking-[0.12em] text-[#555555]">Payment method</p>
+                                <p class="mt-2 text-lg font-semibold text-[#090909]">{{ $order['payment_method'] }}</p>
+                            </div>
+                        @endif
+                        @if (!empty($order['gcash_reference_number']))
+                            <div>
+                                <p class="text-sm font-bold uppercase tracking-[0.12em] text-[#555555]">GCash reference number</p>
+                                <p class="mt-2 text-lg font-semibold text-[#090909]">{{ $order['gcash_reference_number'] }}</p>
+                            </div>
+                        @endif
                     </div>
                     <div class="mt-5 border-t border-dashed border-[#E8DFAF] pt-4">
                         <p class="text-sm font-bold uppercase tracking-[0.12em] text-[#555555]">Total</p>
@@ -47,5 +74,3 @@
         </div>
     </section>
 @endsection
-
-

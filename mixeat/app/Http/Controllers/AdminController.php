@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\Promotion;
 use App\Models\Product;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
@@ -13,6 +15,8 @@ class AdminController extends Controller
     private const CATEGORIES = [
         'Food Trays',
         'Food Bowls',
+        'Drinks',
+        'Desserts',
     ];
 
     public function index()
@@ -139,6 +143,78 @@ class AdminController extends Controller
         ]);
     }
 
+    public function promotions()
+    {
+        $this->ensureMarketing();
+
+        return view('admin.promotions.index', [
+            'promotions' => Promotion::query()->latest()->get(),
+        ]);
+    }
+
+    public function createPromotion()
+    {
+        $this->ensureMarketing();
+
+        return view('admin.promotions.form', ['promotion' => new Promotion()]);
+    }
+
+    public function storePromotion(Request $request)
+    {
+        $this->ensureMarketing();
+        $data = $this->validatedPromotion($request, true);
+        $data['image'] = $request->file('image')->store('promotions', 'public');
+        if ($data['image'] === false) {
+            throw new \RuntimeException('The promotion image could not be saved.');
+        }
+
+        Promotion::create($data);
+
+        return redirect()->route('admin.promotions.index')->with('admin_status', 'Promotion posted successfully.');
+    }
+
+    public function editPromotion(Promotion $promotion)
+    {
+        $this->ensureMarketing();
+
+        return view('admin.promotions.form', ['promotion' => $promotion]);
+    }
+
+    public function updatePromotionPost(Request $request, Promotion $promotion)
+    {
+        $this->ensureMarketing();
+        $data = $this->validatedPromotion($request, false);
+        $oldImage = $promotion->image;
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('promotions', 'public');
+            if ($data['image'] === false) {
+                throw new \RuntimeException('The promotion image could not be saved.');
+            }
+        }
+
+        $promotion->update($data);
+
+        if ($request->hasFile('image') && $oldImage) {
+            Storage::disk('public')->delete($oldImage);
+        }
+
+        return redirect()->route('admin.promotions.index')->with('admin_status', 'Promotion updated successfully.');
+    }
+
+    public function destroyPromotion(Promotion $promotion)
+    {
+        $this->ensureMarketing();
+        $image = $promotion->image;
+        $promotion->delete();
+
+        if ($image) {
+            Storage::disk('public')->delete($image);
+        }
+
+        return back()->with('admin_status', 'Promotion deleted successfully.');
+    }
+
     public function updatePromotion(Request $request)
     {
         $this->ensureAdmin();
@@ -206,6 +282,30 @@ class AdminController extends Controller
             'opening_hours' => ['required', 'string', 'max:255'],
             'distance' => ['required', 'string', 'max:100'],
         ]);
+    }
+
+    private function validatedPromotion(Request $request, bool $requireImage): array
+    {
+        $data = $request->validate([
+            'label' => ['nullable', 'string', 'max:100'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:2000'],
+            'details' => ['required', 'string', 'max:10000'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'button_text' => ['nullable', 'string', 'max:60', 'required_with:button_url'],
+            'button_url' => ['nullable', 'url:http,https', 'max:2048', 'required_with:button_text'],
+            'image' => [$requireImage ? 'required' : 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+
+        $data['is_active'] = $request->boolean('is_active');
+
+        return $data;
+    }
+
+    private function ensureMarketing(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->isMarketing() || auth()->user()->is_admin), 403);
     }
 
     private function ensureAdmin(): void

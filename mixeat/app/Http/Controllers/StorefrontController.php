@@ -4,18 +4,25 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\Order;
+use App\Models\Promotion;
 use App\Models\Product;
 use App\Models\SiteSetting;
 use App\Services\CateringContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
 
 class StorefrontController extends Controller
 {
+    private const IN_HOUSE_DELIVERY_MINIMUM = 3000;
+
+    private const CASH_PAYMENT_MAXIMUM = 1500;
+
     protected array $categories = [
         'All',
-        'Food Trays',
         'Food Bowls',
+        'Drinks',
+        'Desserts',
     ];
 
     /**
@@ -39,13 +46,61 @@ class StorefrontController extends Controller
 
     public function home()
     {
+        $menuProducts = collect($this->catalogProducts())
+            ->reject(fn ($product) => $product['category'] === 'Food Trays')
+            ->values()
+            ->all();
+        $trackedOrders = auth()->check()
+            ? Order::with('branch')
+                ->where('user_id', auth()->id())
+                ->where('status', '!=', 'Completed')
+                ->latest()
+                ->take(10)
+                ->get()
+            : collect();
+
         return view('storefront.home', [
-            'featuredProducts' => array_slice($this->catalogProducts(), 0, 6),
+            'featuredProducts' => array_slice($menuProducts, 0, 6),
             'categories' => $this->categories,
             'branches' => $this->branchOptions(),
             'selectedBranch' => (int) session('selected_branch', 0),
             'promotion' => $this->promotionSettings(),
+            'homePromotions' => Promotion::query()
+                ->where('is_active', true)
+                ->latest()
+                ->get()
+                ->map(fn (Promotion $promotion) => [
+                    'label' => $promotion->label,
+                    'title' => $promotion->title,
+                    'image' => $promotion->image
+                        ? asset('storage/'.$promotion->image)
+                        : asset('images/mixeat.jpg'),
+                    'details_url' => route('featured.show', $promotion),
+                ])
+                ->all(),
+            'trackedOrders' => $trackedOrders,
         ]);
+    }
+
+    public function liveOrders()
+    {
+        $orders = Order::with('branch')
+            ->where('user_id', auth()->id())
+            ->where('status', '!=', 'Completed')
+            ->latest()
+            ->take(10)
+            ->get()
+            ->map(fn (Order $order) => [
+                'id' => $order->order_number,
+                'status' => $order->status,
+                'type' => $order->type,
+                'branch' => $order->branch?->name ?? 'MixEat',
+                'total' => number_format((float) $order->total, 2),
+                'pickup_at' => $order->pickup_at?->format('M j, Y g:i A'),
+                'url' => route('order-detail', (int) str_replace('MX-', '', $order->order_number)),
+            ]);
+
+        return response()->json(['orders' => $orders]);
     }
 
     public function menu(Request $request)
@@ -57,6 +112,7 @@ class StorefrontController extends Controller
         $sort = (string) $request->query('sort', 'featured');
 
         $products = collect($this->catalogProducts())
+            ->reject(fn ($product) => $product['category'] === 'Food Trays')
             ->when($search !== '', fn ($products) => $products->filter(fn ($product) => str_contains(strtolower($product['name'].' '.$product['description']), strtolower($search))))
             ->when($category !== 'All' && in_array($category, $this->categories, true), fn ($products) => $products->where('category', $category))
             ->when($price === 'under-100', fn ($products) => $products->where('price', '<', 100))
@@ -81,12 +137,20 @@ class StorefrontController extends Controller
 
     public function featured()
     {
-        return view('storefront.home', [
-            'featuredProducts' => $this->catalogProducts(),
-            'categories' => $this->categories,
-            'branches' => $this->branchOptions(),
-            'selectedBranch' => (int) session('selected_branch', 0),
-            'promotion' => $this->promotionSettings(),
+        return view('storefront.featured', [
+            'promotions' => Promotion::query()
+                ->where('is_active', true)
+                ->latest()
+                ->get(),
+        ]);
+    }
+
+    public function featuredPromotion(Promotion $promotion)
+    {
+        abort_unless($promotion->is_active, 404);
+
+        return view('storefront.featured-promotion', [
+            'promotion' => $promotion,
         ]);
     }
 
@@ -94,6 +158,10 @@ class StorefrontController extends Controller
     {
         return view('storefront.catering', [
             'cateringContent' => app(CateringContent::class)->get(),
+            'partyTrays' => Product::query()
+                ->where('category', 'Food Trays')
+                ->orderBy('name')
+                ->get(),
             'campaignSource' => (string) request()->query('campaign', ''),
         ]);
     }
@@ -123,6 +191,11 @@ class StorefrontController extends Controller
             'branch' => $order->branch?->name ?? 'MixEat',
             'total' => (float) $order->total,
             'status' => $order->status,
+            'type' => $order->type,
+            'pickup_at' => $order->pickup_at?->format('M j, Y g:i A'),
+            'delivery_method' => $order->delivery_method,
+            'delivery_address' => $order->delivery_address,
+            'payment_method' => $order->payment_method,
             'items' => $order->items,
         ] : [
             'id' => 'MX-'.str_pad((int) $id, 6, '0', STR_PAD_LEFT),
@@ -130,6 +203,11 @@ class StorefrontController extends Controller
             'branch' => 'MixEat',
             'total' => 0.00,
             'status' => 'Pending',
+            'type' => 'Pickup',
+            'pickup_at' => null,
+            'delivery_method' => null,
+            'delivery_address' => null,
+            'payment_method' => null,
             'items' => [],
         ];
 
@@ -174,43 +252,81 @@ class StorefrontController extends Controller
             'subtotal' => $subtotal,
             'deliveryFee' => $deliveryFee,
             'total' => $subtotal + $deliveryFee,
+            'inHouseDeliveryMinimum' => self::IN_HOUSE_DELIVERY_MINIMUM,
+            'cashPaymentMaximum' => self::CASH_PAYMENT_MAXIMUM,
         ]);
     }
 
-    public function placeOrder()
+    public function placeOrder(Request $request)
     {
         $items = $this->getCart();
         abort_if(empty($items), 422, 'Your cart is empty.');
 
         $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
-        $branchId = $this->getActiveBranchId();
-
-        $orderCount = Order::count() + 1;
-        $orderNumber = 'MX-'.str_pad($orderCount, 6, '0', STR_PAD_LEFT);
-
-        $order = Order::create([
-            'order_number' => $orderNumber,
-            'user_id' => auth()->id(),
-            'branch_id' => $branchId,
-            'status' => 'Pending',
-            'type' => 'Pickup',
-            'total' => $subtotal,
+        $validated = $request->validate([
+            'order_type' => ['required', 'in:Pickup,Delivery'],
+            'pickup_at' => ['required_if:order_type,Pickup', 'nullable', 'date', 'after_or_equal:now'],
+            'delivery_method' => ['required_if:order_type,Delivery', 'nullable', 'in:In-house,Maxim'],
+            'delivery_address' => ['required_if:order_type,Delivery', 'nullable', 'string', 'max:1000'],
+            'payment_method' => ['required', 'in:Cash,QR Code'],
+            'gcash_reference_number' => ['required_if:payment_method,QR Code', 'nullable', 'string', 'max:100'],
         ]);
 
-        foreach ($items as $item) {
-            $order->items()->create([
-                'product_name' => $item['name'],
-                'quantity'     => $item['quantity'],
-                'price'        => $item['price'],
-                'addons'       => $item['addons'] ?? [],
-            ]);
+        if ($validated['order_type'] === 'Delivery'
+            && $validated['delivery_method'] === 'In-house'
+            && $subtotal < self::IN_HOUSE_DELIVERY_MINIMUM) {
+            return back()
+                ->withInput()
+                ->withErrors(['delivery_method' => 'In-house delivery requires a minimum purchase of ₱'.number_format(self::IN_HOUSE_DELIVERY_MINIMUM, 2).'.']);
         }
+
+        if ($subtotal > self::CASH_PAYMENT_MAXIMUM && $validated['payment_method'] !== 'QR Code') {
+            return back()
+                ->withInput()
+                ->withErrors(['payment_method' => 'Orders above ₱'.number_format(self::CASH_PAYMENT_MAXIMUM, 2).' must be paid using QR Code.']);
+        }
+
+        $branchId = $this->getActiveBranchId();
+
+        $order = DB::transaction(function () use ($items, $validated, $subtotal, $branchId) {
+            $orderCount = Order::count() + 1;
+            $orderNumber = 'MX-'.str_pad($orderCount, 6, '0', STR_PAD_LEFT);
+
+            $order = Order::create([
+                'order_number' => $orderNumber,
+                'user_id' => auth()->id(),
+                'branch_id' => $branchId,
+                'status' => 'Pending',
+                'type' => $validated['order_type'],
+                'total' => $subtotal,
+                'pickup_at' => $validated['order_type'] === 'Pickup' ? $validated['pickup_at'] : null,
+                'delivery_method' => $validated['order_type'] === 'Delivery' ? $validated['delivery_method'] : null,
+                'delivery_address' => $validated['order_type'] === 'Delivery' ? $validated['delivery_address'] : null,
+                'payment_method' => $validated['payment_method'],
+                'gcash_reference_number' => $validated['payment_method'] === 'QR Code' ? trim($validated['gcash_reference_number']) : null,
+            ]);
+
+            foreach ($items as $item) {
+                $order->items()->create([
+                    'product_name' => $item['name'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'addons' => $item['addons'] ?? [],
+                ]);
+            }
+
+            return $order;
+        });
 
         session()->put('latest_order', [
             'id' => $order->order_number,
             'branch' => $order->branch?->name ?? 'MixEat',
             'type' => $order->type,
             'time' => '25-30 minutes',
+            'pickup_at' => $order->pickup_at?->format('M j, Y g:i A'),
+            'delivery_method' => $order->delivery_method,
+            'payment_method' => $order->payment_method,
+            'gcash_reference_number' => $order->gcash_reference_number,
             'total' => $order->total,
         ]);
 
@@ -228,7 +344,9 @@ class StorefrontController extends Controller
                 'id' => 'MX-000001',
                 'branch' => 'MixEat Banilad',
                 'type' => 'Pickup',
-                'time' => '25-30 minutes',
+                'pickup_at' => null,
+                'delivery_method' => null,
+                'payment_method' => 'Cash',
                 'total' => 0.00,
             ]),
         ]);

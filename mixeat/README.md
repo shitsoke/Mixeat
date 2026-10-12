@@ -57,3 +57,30 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Google and Facebook sign-in
+
+Register OAuth applications with Google and Meta, then set `APP_URL` to the public URL of this app and configure these values in `.env`:
+
+```dotenv
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
+
+FACEBOOK_CLIENT_ID=
+FACEBOOK_CLIENT_SECRET=
+FACEBOOK_REDIRECT_URI="${APP_URL}/auth/facebook/callback"
+```
+
+Add the matching redirect URI to each provider's allowed OAuth callback URLs. Google may use an HTTP localhost callback for local development, but Facebook requires HTTPS: Facebook will reject a callback such as `http://127.0.0.1:8000/auth/facebook/callback`.
+
+To test Facebook sign-in from a local XAMPP app, expose the app through an HTTPS development tunnel (for example, an ngrok HTTPS forwarding URL), then set `APP_URL` and `FACEBOOK_REDIRECT_URI` to that HTTPS host:
+
+```dotenv
+APP_URL=https://your-public-tunnel.example
+FACEBOOK_REDIRECT_URI="${APP_URL}/auth/facebook/callback"
+```
+
+In the Meta developer dashboard, add that exact URL under Facebook Login's Valid OAuth Redirect URIs, add the tunnel hostname to App Domains, and enable Client OAuth Login and Web OAuth Login. The URL, hostname, scheme, port (if present), and path must match exactly. If the tunnel URL changes, update both `.env` and the Meta settings. Only providers with all three settings configured are shown on the login page. Then run `php artisan config:clear` and `php artisan migrate`.
+
+Social sign-in creates customer accounts. It does not automatically connect a social identity to an existing email/password account; users with an existing account should continue using email and password.

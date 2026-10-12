@@ -12,9 +12,13 @@
                     </div>
                 @endif
                 <div class="mb-8 flex flex-col items-center gap-4 text-center md:flex-row md:text-left">
-                    <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#FFC60A] to-[#E5A900] text-2xl font-black text-white shadow-lg shadow-[#E5A900]/25">
-                        {{ strtoupper(substr((string) ($user->first_name ?: $user->name), 0, 1) . substr((string) $user->last_name, 0, 1)) }}
-                    </div>
+                    @if ($user->profile_picture)
+                        <img src="{{ asset('storage/'.$user->profile_picture) }}" alt="{{ $user->name }}'s profile picture" class="h-20 w-20 rounded-full object-cover shadow-lg shadow-[#E5A900]/25">
+                    @else
+                        <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#FFC60A] to-[#E5A900] text-2xl font-black text-white shadow-lg shadow-[#E5A900]/25">
+                            {{ strtoupper(substr((string) ($user->first_name ?: $user->name), 0, 1) . substr((string) $user->last_name, 0, 1)) }}
+                        </div>
+                    @endif
                     <div>
                         <h1 class="text-3xl font-black text-[#090909]">{{ $user->name }}</h1>
                         <p class="text-sm font-medium text-[#777777]">

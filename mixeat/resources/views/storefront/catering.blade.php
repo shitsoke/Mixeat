@@ -3,19 +3,13 @@
 @section('title', 'MixEat Catering | Good Food. Great Moments.')
 
 @section('content')
-    <section id="catering" class="scroll-mt-24 bg-[#FFF9E6] py-12 md:py-16">
+    <section id="catering" class="scroll-mt-24 bg-[#1A1A1A] py-12 md:py-16">
         <div class="w-full px-4 md:px-7">
             <div class="mb-12 grid grid-cols-1 items-center gap-6 lg:grid-cols-12">
-                <div class="lg:col-span-7">
-                    <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#E5A900]">MixEat Catering</p>
-                    <h1 class="mt-2 text-3xl font-bold leading-tight text-[#090909] md:text-4xl">Planning an Event or Office Party?</h1>
-                    <p class="mt-3 max-w-2xl text-base leading-7 text-[#555555]">We offer customized tray packages, packed meals, and full-service catering for corporate events, parties, and celebrations.</p>
-                </div>
-                <div class="lg:col-span-5">
-                    <div class="rounded-[20px] border border-[#E8DFAF] bg-white px-6 py-5 shadow-sm">
-                        <p class="mb-1 text-xs font-bold uppercase tracking-wider text-[#E5A900]">{{ $cateringContent['banner_title'] }}</p>
-                        <p class="mb-0 text-sm text-[#555555]">{{ $cateringContent['banner_copy'] }}</p>
-                    </div>
+                <div class="lg:col-span-12">
+                    <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#FBAB18]">MixEat Catering</p>
+                    <h1 class="catering-hero-title mt-2">Planning an Event or Office Party?</h1>
+                    <p class="mt-3 max-w-2xl text-base leading-7 text-[#B8B8B8]">We offer customized tray packages, packed meals, and full-service catering for corporate events, parties, and celebrations.</p>
                 </div>
             </div>
 
@@ -24,7 +18,7 @@
                     @php($package = $cateringContent['packages'][$index] ?? null)
                     <button
                         type="button"
-                        class="catering-highlight-card flex min-h-[108px] items-center gap-5 rounded-[20px] border border-[#E8DFAF] bg-white px-8 py-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E5A900]"
+                        class="catering-highlight-card flex min-h-[108px] items-center justify-center gap-4 rounded-[20px] border border-[#333333] bg-[#201D19] px-6 py-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FBAB18]"
                         data-catering-package
                         data-package-name="{{ $package['name'] ?? $highlight }}"
                         data-package-description="{{ $package['description'] ?? 'Contact us to learn more about this catering service.' }}"
@@ -35,8 +29,17 @@
                             aria-expanded="{{ request('service') === 'Party Trays' ? 'true' : 'false' }}"
                         @endif
                     >
-                        <span class="text-3xl" aria-hidden="true">{{ ['🍱', '🥘', '🚚'][$index] ?? '✨' }}</span>
-                        <span class="font-bold text-[#090909]">{{ $highlight }}</span>
+                        @if ($index === 2)
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FBAB18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0" aria-hidden="true"><path d="M3 14h18"/><path d="M5 14v-2a7 7 0 0 1 14 0v2"/><path d="M12 4v-2"/><path d="M8 14v3a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-3"/></svg>
+                            <span class="font-bold text-[#FFFFFF]">Catering</span>
+                        @else
+                            @if ($index === 0)
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FBAB18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0" aria-hidden="true"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FBAB18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0" aria-hidden="true"><path d="M3 11h18"/><path d="M5 11l1 9h12l1-9"/><path d="M12 4a3 3 0 0 1 3 3H9a3 3 0 0 1 3-3z"/></svg>
+                            @endif
+                            <span class="font-bold text-[#FFFFFF]">{{ $highlight }}</span>
+                        @endif
                     </button>
                 @endforeach
             </div>
@@ -44,18 +47,18 @@
             @if ($partyTrays->isNotEmpty())
                 <section id="party-trays-menu" class="mb-12 {{ request('service') === 'Party Trays' ? '' : 'hidden' }}" aria-labelledby="party-trays-heading">
                     <div class="mb-6">
-                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#E5A900]">Catering menu</p>
-                        <h2 id="party-trays-heading" class="mt-2 text-3xl font-bold text-[#090909]">Party Trays &amp; Buffet Setups</h2>
-                        <p class="mt-3 max-w-2xl text-base leading-7 text-[#555555]">Choose from MixEat favorites for your gathering. Select a tray to start a catering inquiry and our team will help with portions and pricing.</p>
+                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#FBAB18]">Catering menu</p>
+                        <h2 id="party-trays-heading" class="mt-2 text-3xl font-bold text-[#FFFFFF]">Party Trays &amp; Buffet Setups</h2>
+                        <p class="mt-3 max-w-2xl text-base leading-7 text-[#B8B8B8]">Choose from MixEat favorites for your gathering. Select a tray to start a catering inquiry and our team will help with portions and pricing.</p>
                     </div>
                     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         @foreach ($partyTrays as $partyTray)
-                            <article class="overflow-hidden rounded-[20px] border border-[#E8DFAF] bg-white shadow-sm">
+                            <article class="overflow-hidden rounded-[20px] border border-[#333333] bg-[#201D19] shadow-sm">
                                 <img src="{{ $partyTray->imageUrl() }}" alt="{{ $partyTray->name }}" class="aspect-[4/3] w-full object-cover">
                                 <div class="p-5">
-                                    <h3 class="text-lg font-bold text-[#090909]">{{ $partyTray->name }}</h3>
-                                    <p class="mt-2 min-h-12 text-sm leading-6 text-[#555555]">{{ $partyTray->description }}</p>
-                                    <a href="{{ route('catering', ['service' => 'Party Trays', 'package' => $partyTray->name]) }}#catering-inquiry" class="mt-4 inline-flex rounded-full bg-[#FFC60A] px-5 py-2.5 text-sm font-semibold text-[#090909] transition hover:bg-[#E5A900]">
+                                    <h3 class="text-lg font-bold text-[#FFFFFF]">{{ $partyTray->name }}</h3>
+                                    <p class="mt-2 min-h-12 text-sm leading-6 text-[#B8B8B8]">{{ $partyTray->description }}</p>
+                                    <a href="{{ route('catering', ['service' => 'Party Trays', 'package' => $partyTray->name]) }}#catering-inquiry" class="mt-4 inline-flex rounded-full bg-[#FBAB18] px-5 py-2.5 text-sm font-semibold text-[#FFFFFF] transition hover:bg-[#FBAB18]">
                                         Request this tray
                                     </a>
                                 </div>
@@ -65,7 +68,7 @@
                 </section>
             @endif
 
-            <div class="mb-12 rounded-[20px] border border-[#E8DFAF] bg-white px-6 py-12 md:px-10">
+            <div class="mb-12 rounded-[20px] border border-[#333333] bg-[#201D19] px-6 py-12 md:px-10">
                 <p class="mb-6 text-center text-xs font-bold tracking-[0.16em] text-[#777777]">OUR CATERING CLIENTS &amp; PARTNERS</p>
                 <div class="catering-partner-marquee" role="region" aria-label="Catering clients and partners">
                     <div class="catering-partner-track">
@@ -93,12 +96,12 @@
             </div>
 
             <div id="catering-inquiry" class="w-full scroll-mt-24">
-                <div class="overflow-hidden rounded-[24px] border border-[#E8DFAF] bg-white shadow-sm">
+                <div class="overflow-hidden rounded-[24px] border border-[#333333] bg-[#201D19] shadow-sm">
                     <div class="p-6 md:p-10">
                         <div class="mb-6">
-                            <p class="mb-1 text-xs font-bold uppercase tracking-widest text-[#E5A900]">Tell us about your event</p>
-                            <h2 class="text-3xl font-bold text-[#090909]">Book Catering</h2>
-                            <p class="mb-0 text-[#555555]">Share a few details and our catering team will contact you to plan your event.</p>
+                            <p class="mb-1 text-xs font-bold uppercase tracking-widest text-[#FBAB18]">Tell us about your event</p>
+                            <h2 class="text-3xl font-bold text-[#FFFFFF]">Book Catering</h2>
+                            <p class="mb-0 text-[#B8B8B8]">Share a few details and our catering team will contact you to plan your event.</p>
                         </div>
 
                         @if (session('catering_status'))
@@ -115,36 +118,36 @@
                             @csrf
                             <input type="hidden" name="campaign_source" value="{{ $campaignSource }}">
                             <div>
-                                <label for="catering-client-name" class="mb-1 block text-sm font-semibold text-[#090909]">Client Name</label>
-                                <input id="catering-client-name" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" type="text" name="client_name" value="{{ old('client_name') }}" autocomplete="name" maxlength="120" required>
+                                <label for="catering-client-name" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Client Name</label>
+                                <input id="catering-client-name" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" type="text" name="client_name" value="{{ old('client_name') }}" autocomplete="name" maxlength="120" required>
                             </div>
                             <div>
-                                <label for="catering-email" class="mb-1 block text-sm font-semibold text-[#090909]">Email</label>
-                                <input id="catering-email" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" type="email" name="email" value="{{ old('email') }}" autocomplete="email" maxlength="255" required>
+                                <label for="catering-email" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Email</label>
+                                <input id="catering-email" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" type="email" name="email" value="{{ old('email') }}" autocomplete="email" maxlength="255" required>
                             </div>
                             <div>
-                                <label for="catering-phone" class="mb-1 block text-sm font-semibold text-[#090909]">Phone</label>
-                                <input id="catering-phone" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" type="tel" name="phone" value="{{ old('phone') }}" autocomplete="tel" maxlength="30" required>
+                                <label for="catering-phone" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Phone</label>
+                                <input id="catering-phone" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" type="tel" name="phone" value="{{ old('phone') }}" autocomplete="tel" maxlength="30" required>
                             </div>
                             <div>
-                                <label for="catering-company" class="mb-1 block text-sm font-semibold text-[#090909]">Company / Organization <span class="font-normal text-[#777777]">(optional)</span></label>
-                                <input id="catering-company" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" type="text" name="company_name" value="{{ old('company_name') }}" maxlength="160">
+                                <label for="catering-company" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Company / Organization <span class="font-normal text-[#777777]">(optional)</span></label>
+                                <input id="catering-company" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" type="text" name="company_name" value="{{ old('company_name') }}" maxlength="160">
                             </div>
                             <div>
-                                <label for="catering-date" class="mb-1 block text-sm font-semibold text-[#090909]">Event Date</label>
-                                <input id="catering-date" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" type="date" name="event_date" value="{{ old('event_date') }}" min="{{ now()->toDateString() }}" required>
+                                <label for="catering-date" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Event Date</label>
+                                <input id="catering-date" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" type="date" name="event_date" value="{{ old('event_date') }}" min="{{ now()->toDateString() }}" required>
                             </div>
                             <div>
-                                <label for="catering-time" class="mb-1 block text-sm font-semibold text-[#090909]">Event Time</label>
-                                <input id="catering-time" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" type="time" name="event_time" value="{{ old('event_time') }}" required>
+                                <label for="catering-time" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Event Time</label>
+                                <input id="catering-time" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" type="time" name="event_time" value="{{ old('event_time') }}" required>
                             </div>
                             <div>
-                                <label for="catering-venue" class="mb-1 block text-sm font-semibold text-[#090909]">Venue / Location</label>
-                                <input id="catering-venue" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" type="text" name="venue" value="{{ old('venue') }}" maxlength="255" required>
+                                <label for="catering-venue" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Venue / Location</label>
+                                <input id="catering-venue" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" type="text" name="venue" value="{{ old('venue') }}" maxlength="255" required>
                             </div>
                             <div>
-                                <label for="catering-event-type" class="mb-1 block text-sm font-semibold text-[#090909]">Event Type</label>
-                                <select id="catering-event-type" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" name="event_type" required>
+                                <label for="catering-event-type" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Event Type</label>
+                                <select id="catering-event-type" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" name="event_type" required>
                                     <option value="">Choose an event type</option>
                                     @foreach (['Corporate', 'Office Party', 'Celebration'] as $eventType)
                                         <option value="{{ $eventType }}" @selected(old('event_type') === $eventType)>{{ $eventType }}</option>
@@ -152,8 +155,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="catering-service" class="mb-1 block text-sm font-semibold text-[#090909]">Service Type</label>
-                                <select id="catering-service" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" name="service_type" required>
+                                <label for="catering-service" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Service Type</label>
+                                <select id="catering-service" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" name="service_type" required>
                                     <option value="">Choose a service</option>
                                     @foreach (['Packed Meals', 'Party Trays', 'Full-Service Catering'] as $service)
                                         <option value="{{ $service }}" @selected(old('service_type', request('service')) === $service)>{{ $service }}</option>
@@ -161,16 +164,16 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="catering-guests" class="mb-1 block text-sm font-semibold text-[#090909]">Guest Count</label>
-                                <input id="catering-guests" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" type="number" name="guest_count" value="{{ old('guest_count') }}" min="1" max="5000" required>
+                                <label for="catering-guests" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Guest Count</label>
+                                <input id="catering-guests" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" type="number" name="guest_count" value="{{ old('guest_count') }}" min="1" max="5000" required>
                             </div>
                             <div>
-                                <label for="catering-budget" class="mb-1 block text-sm font-semibold text-[#090909]">Budget Range <span class="font-normal text-[#777777]">(optional)</span></label>
-                                <input id="catering-budget" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" type="text" name="budget_range" value="{{ old('budget_range') }}" maxlength="100" placeholder="e.g. ₱20,000–₱30,000">
+                                <label for="catering-budget" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Budget Range <span class="font-normal text-[#777777]">(optional)</span></label>
+                                <input id="catering-budget" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" type="text" name="budget_range" value="{{ old('budget_range') }}" maxlength="100" placeholder="e.g. ₱10,000 - ₱20,000">
                             </div>
                             <div class="md:col-span-2">
-                                <label for="catering-package" class="mb-1 block text-sm font-semibold text-[#090909]">Package Preference <span class="font-normal text-[#777777]">(optional)</span></label>
-                                <select id="catering-package" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" name="package_preference">
+                                <label for="catering-package" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Package Preference <span class="font-normal text-[#777777]">(optional)</span></label>
+                                <select id="catering-package" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" name="package_preference">
                                     <option value="">No preference yet</option>
                                     @foreach ($cateringContent['packages'] as $package)
                                         <option value="{{ $package['name'] }}" @selected(old('package_preference', request('package')) === $package['name'])>{{ $package['name'] }}</option>
@@ -185,11 +188,11 @@
                                 </select>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="catering-requests" class="mb-1 block text-sm font-semibold text-[#090909]">Special Requests</label>
-                                <textarea id="catering-requests" class="w-full rounded-lg border border-[#D6D6D6] bg-white px-4 py-3 text-base text-[#090909] focus:border-[#E5A900] focus:outline-none focus:ring-2 focus:ring-[#FFC60A]/30" name="special_requests" rows="4" maxlength="2000">{{ old('special_requests') }}</textarea>
+                                <label for="catering-requests" class="mb-1 block text-sm font-semibold text-[#FFFFFF]">Special Requests</label>
+                                <textarea id="catering-requests" class="w-full rounded-lg border border-[#D6D6D6] bg-[#201D19] px-4 py-3 text-base text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30" name="special_requests" rows="4" maxlength="2000">{{ old('special_requests') }}</textarea>
                             </div>
                             <div class="pt-2 md:col-span-2">
-                                <button type="submit" class="w-full rounded-full bg-[#FFC60A] px-6 py-3 font-bold text-[#090909] shadow-sm transition hover:bg-[#E5A900]">Send Catering Inquiry</button>
+                                <button type="submit" class="w-full rounded-full bg-[#FBAB18] px-6 py-3 font-bold text-[#FFFFFF] shadow-sm transition hover:bg-[#FBAB18]">Send Catering Inquiry</button>
                             </div>
                         </form>
                     </div>
@@ -198,19 +201,23 @@
         </div>
     </section>
 
-    <dialog id="catering-package-dialog" class="catering-package-dialog w-[calc(100%-2rem)] max-w-lg rounded-[24px] border border-[#E8DFAF] bg-white p-0 text-[#090909] shadow-2xl backdrop:bg-[#090909]/50" aria-labelledby="catering-package-title">
+    <dialog id="catering-package-dialog" class="catering-package-dialog w-[calc(100%-2rem)] max-w-lg rounded-[24px] border border-[#333333] bg-[#201D19] p-0 text-[#FFFFFF] shadow-2xl backdrop:bg-[#FFFFFF]/50" aria-labelledby="catering-package-title">
         <div class="p-6 md:p-8">
             <div class="mb-5 flex items-start justify-between gap-4">
                 <div>
-                    <p class="mb-1 text-xs font-bold uppercase tracking-widest text-[#E5A900]">Catering package</p>
+                    <p class="mb-1 text-xs font-bold uppercase tracking-widest text-[#FBAB18]">Catering package</p>
                     <h2 id="catering-package-title" class="text-2xl font-bold"></h2>
                 </div>
-                <button type="button" class="rounded-full border border-[#E8DFAF] px-3 py-1 text-xl leading-none text-[#555555] hover:bg-[#FFF9E6]" data-close-catering-package aria-label="Close package details">&times;</button>
+                <button type="button" class="rounded-full border border-[#333333] px-3 py-1 text-xl leading-none text-[#B8B8B8] hover:bg-[#1A1A1A]" data-close-catering-package aria-label="Close package details">&times;</button>
             </div>
-            <p id="catering-package-description" class="text-base leading-7 text-[#555555]"></p>
-            <p id="catering-package-price" class="hidden mb-6 font-bold text-[#E5A900]"></p>
-            <button type="button" class="mt-4 w-full rounded-full bg-[#FFC60A] px-6 py-3 font-bold text-[#090909] shadow-sm transition hover:bg-[#E5A900]" data-book-catering-package>Choose Package &amp; Book</button>
+            <p id="catering-package-description" class="text-base leading-7 text-[#B8B8B8]"></p>
+            <p id="catering-package-price" class="hidden mb-6 font-bold text-[#FBAB18]"></p>
+            <button type="button" class="mt-4 w-full rounded-full bg-[#FBAB18] px-6 py-3 font-bold text-[#FFFFFF] shadow-sm transition hover:bg-[#FBAB18]" data-book-catering-package>Choose Package &amp; Book</button>
         </div>
     </dialog>
 
 @endsection
+
+
+
+

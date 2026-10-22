@@ -18,7 +18,7 @@ class CateringInquiryController extends Controller
             'event_date' => ['required', 'date', 'after_or_equal:today'],
             'event_time' => ['required', 'date_format:H:i'],
             'venue' => ['required', 'string', 'max:255'],
-            'event_type' => ['required', Rule::in(['Corporate', 'Office Party', 'Celebration'])],
+            'event_type' => ['required', Rule::in(['Corporate', 'Office Party', 'Celebration', 'Wedding', 'Birthday', 'Other'])],
             'service_type' => ['required', Rule::in(['Packed Meals', 'Party Trays', 'Full-Service Catering'])],
             'package_preference' => ['nullable', 'string', 'max:255'],
             'guest_count' => ['required', 'integer', 'min:1', 'max:5000'],

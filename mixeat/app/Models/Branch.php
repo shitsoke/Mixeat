@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Branch extends Model
 {
-    protected $fillable = ['name', 'address', 'opening_hours', 'distance'];
+    protected $fillable = ['name', 'address', 'opening_hours', 'telephone_number'];
 
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class)->withPivot('available')->withTimestamps();
     }
 }
+
+

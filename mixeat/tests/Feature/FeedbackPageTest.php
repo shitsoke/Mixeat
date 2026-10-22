@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -63,7 +64,8 @@ class FeedbackPageTest extends TestCase
             ->assertSee(asset(config('feedback.qr_image')), false);
         $response->assertSee('grid gap-5 sm:grid-cols-2 xl:grid-cols-3', false)
             ->assertSee('View details')
-            ->assertSee('id="feedback-details-dialog"', false);
+            ->assertSee('id="feedback-details-dialog"', false)
+            ->assertSee('5 - numericRating', false);
 
         Http::assertSent(fn ($request) => $request->url() === 'https://sheets.example.test/reviews.json');
     }
@@ -87,6 +89,36 @@ class FeedbackPageTest extends TestCase
             ->assertSee('Great meal.')
             ->assertDontSee('Jordan')
             ->assertDontSee('Hidden review.');
+    }
+
+    public function test_feedback_page_uses_cached_reviews_when_the_sheet_is_unavailable(): void
+    {
+        $url = 'https://sheets.example.test/reviews.json';
+        config(['feedback.sheet_json_url' => $url]);
+        Cache::forget('feedback.approved_reviews');
+        Http::fake([
+            $url => Http::sequence()
+                ->push([
+                    [
+                        'timestamp' => 'October 19, 2026',
+                        'name' => 'Taylor',
+                        'feedback' => 'A great meal.',
+                        'approval_status' => 'Approved',
+                    ],
+                ])
+                ->pushFailedConnection(),
+        ]);
+
+        $this->get('/feedback')
+            ->assertOk()
+            ->assertSee('Taylor')
+            ->assertSee('A great meal.');
+
+        $this->get('/feedback')
+            ->assertOk()
+            ->assertSee('Taylor')
+            ->assertSee('A great meal.')
+            ->assertDontSee('Customer feedback could not be loaded.');
     }
 
     public function test_feedback_page_reports_when_sheet_is_not_configured(): void

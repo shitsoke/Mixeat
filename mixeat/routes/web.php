@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\AdminController;
@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\SupervisorController;
 use App\Http\Controllers\Admin\SupervisorManagementController;
 use App\Http\Controllers\CateringInquiryController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\CareerController;
+use App\Http\Controllers\Admin\JobController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -36,11 +38,15 @@ Route::get('/orders', [StorefrontController::class, 'orders'])->name('orders');
 Route::get('/orders/{id}', [StorefrontController::class, 'orderDetail'])->name('order-detail');
 Route::get('/about', [StorefrontController::class, 'about'])->name('about');
 Route::get('/contact', [StorefrontController::class, 'contact'])->name('contact');
+Route::get('/careers', [CareerController::class, 'index'])->name('careers');
+Route::get('/careers/{job}/apply', [CareerController::class, 'showApply'])->name('careers.apply.form');
+Route::post('/careers/{job}/apply', [CareerController::class, 'apply'])->name('careers.apply');
 Route::post('/catering/inquiries', [CateringInquiryController::class, 'store'])
     ->middleware('throttle:5,1')
     ->name('catering.inquiries.store');
 
 Route::middleware('guest')->group(function () {
+    Route::get('/supervisor/login', fn () => redirect()->route('login'));
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirectToProvider'])
@@ -149,6 +155,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/cms/about', [CmsController::class, 'updateAbout'])->name('cms.about.update');
         Route::get('/cms/contact', [CmsController::class, 'editContact'])->name('cms.contact');
         Route::post('/cms/contact', [CmsController::class, 'updateContact'])->name('cms.contact.update');
+
+        Route::resource('jobs', JobController::class)->names('jobs');
+        Route::patch('/jobs/{job}/toggle', [JobController::class, 'toggle'])->name('jobs.toggle');
+        Route::get('/jobs/applications/{application}/resume', [JobController::class, 'downloadResume'])->name('jobs.resume');
     });
 
     // 2. Branch Supervisor Routes

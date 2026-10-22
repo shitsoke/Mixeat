@@ -8,9 +8,9 @@
         <!-- Header with Export Button -->
         <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#FFC60A]">Supervisor</p>
-                <h1 class="mt-1 text-3xl font-black text-[#090909] md:text-4xl">Supervisor Dashboard</h1>
-                <p class="mt-1 text-sm font-medium text-[#555555]">Managing Branch: <strong class="text-[#090909]">{{ $branch->name }}</strong></p>
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#FBAB18]">Supervisor</p>
+                <h1 class="mt-1 text-3xl font-black text-[#FFFFFF] md:text-4xl">Supervisor Dashboard</h1>
+                <p class="mt-1 text-sm font-medium text-[#B8B8B8]">Managing Branch: <strong class="text-[#FFFFFF]">{{ $branch->name }}</strong></p>
             </div>
 
             <!-- Export Daily Sales Report Excel Button -->
@@ -25,7 +25,7 @@
         </div>
 
         @if(session('admin_status'))
-            <div class="mb-6 rounded-2xl bg-[#FFF4BF] px-4 py-3 font-semibold text-[#090909]">
+            <div class="mb-6 rounded-2xl bg-[#201D19] px-4 py-3 font-semibold text-[#FFFFFF]">
                 {{ session('admin_status') }}
             </div>
         @endif
@@ -33,13 +33,13 @@
         <!-- Responsive Daily Inventory & Revenue Metrics Grid -->
         <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <!-- Today's Orders -->
-            <div class="rounded-[20px] border border-[#E8DFAF] bg-[#FFF9E6] p-5 shadow-sm">
+            <div class="rounded-[20px] border border-[#333333] bg-[#1A1A1A] p-5 shadow-sm">
                 <p class="text-xs font-bold uppercase tracking-wider text-[#777777]">Today's Orders</p>
-                <h3 id="live-total-orders" class="mt-2 text-2xl font-black text-[#090909]">{{ $dailySummary['total_orders'] }}</h3>
+                <h3 id="live-total-orders" class="mt-2 text-2xl font-black text-[#FFFFFF]">{{ $dailySummary['total_orders'] }}</h3>
             </div>
 
             <!-- In Preparation -->
-            <div class="rounded-[20px] border border-[#E8DFAF] bg-[#FFF3CD] p-5 shadow-sm">
+            <div class="rounded-[20px] border border-[#333333] bg-[#FFF3CD] p-5 shadow-sm">
                 <p class="text-xs font-bold uppercase tracking-wider text-[#856404]">In Preparation</p>
                 <h3 id="live-preparing-orders" class="mt-2 text-2xl font-black text-[#856404]">{{ $dailySummary['preparing_count'] }}</h3>
             </div>
@@ -51,23 +51,23 @@
             </div>
 
             <!-- Estimated Revenue -->
-            <div class="rounded-[20px] border border-[#E8DFAF] bg-white p-5 shadow-sm">
+            <div class="rounded-[20px] border border-[#333333] bg-[#201D19] p-5 shadow-sm">
                 <p class="text-xs font-bold uppercase tracking-wider text-[#777777]">Estimated Revenue</p>
-                <h3 id="live-revenue" class="mt-2 text-2xl font-black text-[#090909]">&#8369;{{ number_format($dailySummary['total_revenue'], 2) }}</h3>
+                <h3 id="live-revenue" class="mt-2 text-2xl font-black text-[#FFFFFF]">&#8369;{{ number_format($dailySummary['total_revenue'], 2) }}</h3>
             </div>
         </div>
 
         <!-- Branch Orders Section -->
-        <div class="mb-10 rounded-[28px] border border-[#E8DFAF] bg-white p-6 shadow-sm">
+        <div class="mb-10 rounded-[28px] border border-[#333333] bg-[#201D19] p-6 shadow-sm">
             <div class="mb-4 flex items-center justify-between">
-                <h2 class="text-xl font-bold text-[#090909]">Branch Orders</h2>
-                <span id="live-orders-status" role="status" class="rounded-full bg-[#FFC60A] px-3 py-1 text-xs font-bold text-[#090909]">Live updates</span>
+                <h2 class="text-xl font-bold text-[#FFFFFF]">Branch Orders</h2>
+                <span id="live-orders-status" role="status" class="rounded-full bg-[#FBAB18] px-3 py-1 text-xs font-bold text-[#FFFFFF]">Live updates</span>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-[#E8DFAF] text-xs font-bold uppercase tracking-wider text-[#777777]">
+                        <tr class="border-b border-[#333333] text-xs font-bold uppercase tracking-wider text-[#777777]">
                             <th class="py-3 px-4">Order #</th>
                             <th class="py-3 px-4">Type</th>
                             <th class="py-3 px-4">Total</th>
@@ -75,7 +75,7 @@
                             <th class="py-3 px-4 text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="live-orders-table" class="divide-y divide-[#E8DFAF]/60 text-sm font-medium">
+                    <tbody id="live-orders-table" class="divide-y divide-[#333333]/60 text-sm font-medium">
                         @include('admin.supervisors.partials.order-rows', ['orders' => $orders])
                     </tbody>
                 </table>
@@ -83,28 +83,28 @@
         </div>
 
         <!-- Menu Availability Section -->
-        <div class="rounded-[28px] border border-[#E8DFAF] bg-white p-6 shadow-sm">
-            <h2 class="mb-4 text-xl font-bold text-[#090909]">Menu Availability</h2>
+        <div class="rounded-[28px] border border-[#333333] bg-[#201D19] p-6 shadow-sm">
+            <h2 class="mb-4 text-xl font-bold text-[#FFFFFF]">Menu Availability</h2>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-[#E8DFAF] text-xs font-bold uppercase tracking-wider text-[#777777]">
+                        <tr class="border-b border-[#333333] text-xs font-bold uppercase tracking-wider text-[#777777]">
                             <th class="py-3 px-4">Item Name</th>
                             <th class="py-3 px-4">Price</th>
                             <th class="py-3 px-4 text-center">Status</th>
                             <th class="py-3 px-4 text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-[#E8DFAF]/60 text-sm font-medium">
+                    <tbody class="divide-y divide-[#333333]/60 text-sm font-medium">
                         @forelse($products as $product)
                             @php
                                 $branchPivot = $product->branches->first()?->pivot;
                                 $isAvailable = $branchPivot ? (bool) $branchPivot->available : true;
                             @endphp
                             <tr>
-                                <td class="py-4 px-4 font-bold text-[#090909]">{{ $product->name }}</td>
-                                <td class="py-4 px-4 text-[#090909]">&#8369;{{ number_format($product->price, 2) }}</td>
+                                <td class="py-4 px-4 font-bold text-[#FFFFFF]">{{ $product->name }}</td>
+                                <td class="py-4 px-4 text-[#FFFFFF]">&#8369;{{ number_format($product->price, 2) }}</td>
                                 <td class="py-4 px-4 text-center">
                                     @if($isAvailable)
                                         <span class="inline-block rounded-full bg-[#E6F4EA] px-3 py-1 text-xs font-bold text-[#1E8E3E]">Available</span>
@@ -161,7 +161,7 @@
                 document.getElementById('live-total-orders').textContent = data.daily_summary.total_orders;
                 document.getElementById('live-preparing-orders').textContent = data.daily_summary.preparing_count;
                 document.getElementById('live-ready-orders').textContent = data.daily_summary.ready_count;
-                document.getElementById('live-revenue').textContent = `₱${Number(data.daily_summary.total_revenue).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById('live-revenue').textContent = "₱" + Number(data.daily_summary.total_revenue).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 indicator.textContent = 'Live updates';
                 indicator.className = 'rounded-full bg-[#E6F4EA] px-3 py-1 text-xs font-bold text-[#1E8E3E]';
             } catch (error) {

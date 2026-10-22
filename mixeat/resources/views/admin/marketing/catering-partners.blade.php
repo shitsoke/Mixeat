@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('content')
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
@@ -23,8 +23,8 @@
             <input id="new-partner-website" class="form-control" type="url" name="website_url" maxlength="2048" placeholder="https://example.com">
         </div>
         <div class="col-md-4">
-            <label for="new-partner-logo" class="form-label fw-semibold">Logo (PNG, JPG, SVG)</label>
-            <input id="new-partner-logo" class="form-control" type="file" name="logo" accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml" required>
+            <label for="new-partner-logo" class="form-label fw-semibold">Logo (PNG, JPG, JPEG, SVG, WebP)</label>
+            <input id="new-partner-logo" class="form-control" type="file" name="logo" accept=".png,.jpg,.jpeg,.svg,.webp,image/png,image/jpeg,image/svg+xml,image/webp" required>
         </div>
         <div class="col-sm-4 col-md-2">
             <label for="new-partner-order" class="form-label fw-semibold">Display order</label>
@@ -64,8 +64,8 @@
                     <input id="partner-website-{{ $partner->id }}" class="form-control" type="url" name="website_url" value="{{ $partner->website_url }}" maxlength="2048">
                 </div>
                 <div class="col-md-4">
-                    <label for="partner-logo-{{ $partner->id }}" class="form-label fw-semibold">Replace logo (PNG, JPG, SVG)</label>
-                    <input id="partner-logo-{{ $partner->id }}" class="form-control" type="file" name="logo" accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml">
+                    <label for="partner-logo-{{ $partner->id }}" class="form-label fw-semibold">Replace Logo (PNG, JPG, JPEG, SVG, WebP)</label>
+                    <input id="partner-logo-{{ $partner->id }}" class="form-control" type="file" name="logo" accept=".png,.jpg,.jpeg,.svg,.webp,image/png,image/jpeg,image/svg+xml,image/webp">
                 </div>
                 <div class="col-sm-4 col-md-2">
                     <label for="partner-order-{{ $partner->id }}" class="form-label fw-semibold">Display order</label>
@@ -92,3 +92,5 @@
     @endforelse
 </div>
 @endsection
+
+

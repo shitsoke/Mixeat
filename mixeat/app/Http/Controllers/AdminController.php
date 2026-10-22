@@ -223,7 +223,7 @@ class AdminController extends Controller
             'label' => ['required', 'string', 'max:100'],
             'title' => ['required', 'string', 'max:255'],
             'price' => ['nullable', 'numeric', 'min:0'], // Optional price validation
-            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:40960'],
         ]);
 
         foreach (['label', 'title', 'price'] as $key) {
@@ -258,11 +258,13 @@ class AdminController extends Controller
             'category' => ['required', 'string', Rule::in(self::CATEGORIES)],
             'description' => ['required', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
-            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:40960'],
             'badge' => ['nullable', 'string', 'max:100'],
-        ]), $request->hasFile('image')
+            'subcategory' => ['nullable', 'string', 'max:100'],
+            'is_best_seller' => ['nullable', 'boolean'],
+        ]), array_merge($request->hasFile('image')
             ? ['image' => $request->file('image')->store('products', 'public')]
-            : []);
+            : [], ['is_best_seller' => $request->boolean('is_best_seller')]));
     }
 
     private function syncBranchAvailability(Request $request, Product $product): void
@@ -280,7 +282,7 @@ class AdminController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
             'opening_hours' => ['required', 'string', 'max:255'],
-            'distance' => ['required', 'string', 'max:100'],
+            'telephone_number' => ['nullable', 'string', 'max:30'],
         ]);
     }
 
@@ -294,7 +296,7 @@ class AdminController extends Controller
             'price' => ['nullable', 'numeric', 'min:0'],
             'button_text' => ['nullable', 'string', 'max:60', 'required_with:button_url'],
             'button_url' => ['nullable', 'url:http,https', 'max:2048', 'required_with:button_text'],
-            'image' => [$requireImage ? 'required' : 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'image' => [$requireImage ? 'required' : 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:40960'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
@@ -313,3 +315,7 @@ class AdminController extends Controller
         abort_unless(auth()->check() && auth()->user()->is_admin, 403);
     }
 }
+
+
+
+

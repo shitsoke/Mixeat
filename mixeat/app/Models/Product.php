@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Product extends Model
 {
-    protected $fillable = ['name', 'category', 'description', 'price', 'image', 'badge'];
+    protected $fillable = ['name', 'category', 'subcategory', 'description', 'price', 'image', 'badge', 'is_best_seller'];
 
     protected $casts = ['price' => 'decimal:2'];
 
@@ -27,3 +27,4 @@ class Product extends Model
         return $this->belongsToMany(Branch::class)->withPivot('available')->withTimestamps();
     }
 }
+

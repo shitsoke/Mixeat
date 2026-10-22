@@ -163,9 +163,10 @@ class CateringManagementController extends Controller
             'logo' => [
                 $requireLogo ? 'required' : 'nullable',
                 'file',
-                'mimes:png,jpg,jpeg,svg',
+                'mimes:png,jpg,jpeg,svg,webp',
                 'max:5120',
             ],
         ]) + ['is_visible' => $request->boolean('is_visible')];
     }
 }
+

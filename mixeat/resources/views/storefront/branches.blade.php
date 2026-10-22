@@ -6,35 +6,26 @@
     <section class="py-14">
         <div class="mixeat-shell px-4">
             <div class="mb-8 text-center">
-                <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#FFC60A]">Pick a branch</p>
-                <h1 class="mt-2 text-4xl font-black text-[#090909]">Choose Your MixEat Branch</h1>
-                <p class="mt-3 text-lg text-[#555555]">Select the branch closest to you.</p>
+                <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#FBAB18]">Pick a branch</p>
+                <h1 class="mt-2 text-4xl font-black text-[#FFFFFF]">Choose Your MixEat Branch</h1>
+                <p class="mt-3 text-lg text-[#B8B8B8]">Select the branch closest to you.</p>
             </div>
 
-            <div class="mb-8 flex justify-center">
-                <button type="button" class="inline-flex items-center gap-2 rounded-full bg-[#FFC60A] px-6 py-3.5 text-base font-semibold text-[#090909] shadow-lg shadow-[#E5A900]/25 transition hover:bg-[#E5A900]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 20s-7-4.35-7-10A4 4 0 0112 9a4 4 0 014-3 4 4 0 013 7c0 5.65-7 10-7 10z" />
-                    </svg>
-                    Use My Location
-                </button>
-            </div>
 
             <div class="grid gap-6 lg:grid-cols-3">
                 @foreach ($branches as $index => $branch)
-                    <div class="rounded-[30px] border {{ $selectedBranch === $index ? 'border-[#FFC60A] ring-2 ring-[#FFC60A]/20' : 'border-[#E8DFAF]' }} bg-white p-6 shadow-[0_14px_40px_rgba(229,169,0,0.10)]">
+                    <div class="rounded-[30px] border {{ $selectedBranch === $index ? 'border-[#FBAB18] ring-2 ring-[#FBAB18]/20' : 'border-[#333333]' }} bg-[#111111] p-6 shadow-[0_14px_40px_rgba(229,169,0,0.10)]">
                         <div class="mb-4 flex items-center justify-between gap-3">
-                            <h2 class="text-2xl font-black text-[#090909]">{{ $branch['name'] }}</h2>
-                            <span class="rounded-full bg-[#FFF4BF] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#FFC60A]">Nearest</span>
+                            <h2 class="text-2xl font-black text-[#FFFFFF]">{{ $branch['name'] }}</h2>
                         </div>
-                        <div class="space-y-3 text-[#555555]">
-                            <p><span class="font-semibold text-[#090909]">Address:</span> {{ $branch['address'] }}</p>
-                            <p><span class="font-semibold text-[#090909]">Opening Hours:</span> {{ $branch['opening_hours'] }}</p>
-                            <p><span class="font-semibold text-[#090909]">Distance:</span> {{ $branch['distance'] }}</p>
+                        <div class="space-y-3 text-[#B8B8B8]">
+                            <p><span class="font-semibold text-[#FFFFFF]">Address:</span> {{ $branch['address'] }}</p>
+                            <p><span class="font-semibold text-[#FFFFFF]">Opening Hours:</span> {{ $branch['opening_hours'] }}</p>
+                            @if(!empty($branch['telephone_number']))<p><span class="font-semibold text-[#FFFFFF]">Telephone:</span> {{ $branch['telephone_number'] }}</p>@endif
                         </div>
                         <form action="{{ route('branches.select', ['branch' => $index]) }}" method="POST" class="mt-6">
                             @csrf
-                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-full bg-[#FFC60A] px-5 py-3 text-base font-semibold text-[#090909] shadow-lg shadow-[#E5A900]/25 transition hover:bg-[#E5A900]">
+                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-full bg-[#FBAB18] px-5 py-3 text-base font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18]">
                                 {{ $selectedBranch === $index ? 'Selected Branch' : 'Select Branch' }}
                             </button>
                         </form>
@@ -44,5 +35,7 @@
         </div>
     </section>
 @endsection
+
+
 
 

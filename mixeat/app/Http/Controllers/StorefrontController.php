@@ -21,6 +21,10 @@ class StorefrontController extends Controller
     protected array $categories = [
         'All',
         'Food Bowls',
+        'Signatures',
+        'Sizzling & BBQ',
+        'Crispy Favorites',
+        'Healthy & Veggie',
         'Drinks',
         'Desserts',
     ];
@@ -107,6 +111,9 @@ class StorefrontController extends Controller
     {
         $search = trim((string) $request->query('q', ''));
         $category = (string) $request->query('category', 'All');
+        if ($category === 'All Bowls') {
+            $category = 'Food Bowls';
+        }
         $price = (string) $request->query('price', 'any');
         $availability = (string) $request->query('availability', 'all');
         $sort = (string) $request->query('sort', 'featured');
@@ -114,6 +121,9 @@ class StorefrontController extends Controller
         $products = collect($this->catalogProducts())
             ->reject(fn ($product) => $product['category'] === 'Food Trays')
             ->when($search !== '', fn ($products) => $products->filter(fn ($product) => str_contains(strtolower($product['name'].' '.$product['description']), strtolower($search))))
+            ->when($category === 'Best Seller', fn ($products) => $products->where('category', 'Food Bowls')->where('is_best_seller', true))
+            ->when(in_array($category, ['Chicken','Pork','Beef','Fish'], true), fn ($products) => $products->where('category', 'Food Bowls')->filter(fn ($p) => strcasecmp($p['subcategory'] ?? '', $category) === 0))
+            ->when($category === 'All Bowls' || $category === 'All', fn ($products) => $products->where('category', 'Food Bowls'))
             ->when($category !== 'All' && in_array($category, $this->categories, true), fn ($products) => $products->where('category', $category))
             ->when($price === 'under-100', fn ($products) => $products->where('price', '<', 100))
             ->when($price === '100-200', fn ($products) => $products->whereBetween('price', [100, 200]))
@@ -277,13 +287,13 @@ class StorefrontController extends Controller
             && $subtotal < self::IN_HOUSE_DELIVERY_MINIMUM) {
             return back()
                 ->withInput()
-                ->withErrors(['delivery_method' => 'In-house delivery requires a minimum purchase of ₱'.number_format(self::IN_HOUSE_DELIVERY_MINIMUM, 2).'.']);
+                ->withErrors(['delivery_method' => 'In-house delivery requires a minimum purchase of ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±'.number_format(self::IN_HOUSE_DELIVERY_MINIMUM, 2).'.']);
         }
 
         if ($subtotal > self::CASH_PAYMENT_MAXIMUM && $validated['payment_method'] !== 'QR Code') {
             return back()
                 ->withInput()
-                ->withErrors(['payment_method' => 'Orders above ₱'.number_format(self::CASH_PAYMENT_MAXIMUM, 2).' must be paid using QR Code.']);
+                ->withErrors(['payment_method' => 'Orders above ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±'.number_format(self::CASH_PAYMENT_MAXIMUM, 2).' must be paid using QR Code.']);
         }
 
         $branchId = $this->getActiveBranchId();
@@ -401,7 +411,7 @@ class StorefrontController extends Controller
     {
         $product = collect($this->catalogProducts())->firstWhere('id', (int) $id);
 
-        if (! $product || ! $product['available']) {
+        if (! $product || ! ($product['available'] ?? true)) {
             return back()->with('cart_status', 'Sorry, this item is sold out at the selected branch.');
         }
 
@@ -532,7 +542,7 @@ class StorefrontController extends Controller
                 'name' => $branch->name,
                 'address' => $branch->address,
                 'opening_hours' => $branch->opening_hours,
-                'distance' => $branch->distance ?? '1.0 km away',
+                'telephone_number' => $branch->telephone_number,
             ];
         })->all();
     }
@@ -582,12 +592,20 @@ class StorefrontController extends Controller
                 'id' => $product->id,
                 'name' => $product->name,
                 'category' => $product->category,
+                'subcategory' => $product->subcategory,
                 'description' => $product->description,
                 'price' => (float) $product->price,
                 'image' => method_exists($product, 'imageUrl') ? $product->imageUrl() : asset('storage/'.$product->image),
                 'badge' => $product->badge,
-                'available' => $availability,
+                'is_best_seller' => (bool) $product->is_best_seller,
             ];
         })->all();
     }
 }
+
+
+
+
+
+
+

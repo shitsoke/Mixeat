@@ -3,16 +3,20 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class FeedbackController extends Controller
 {
+    private const REVIEWS_CACHE_KEY = 'feedback.approved_reviews';
+
     public function index(): View
     {
         $reviews = [];
         $feedbackError = null;
+        $cachedReviews = Cache::get(self::REVIEWS_CACHE_KEY);
         $sheetUrl = config('feedback.sheet_json_url');
 
         if (! is_string($sheetUrl) || trim($sheetUrl) === '') {
@@ -48,12 +52,20 @@ class FeedbackController extends Controller
                             ->filter(fn (array $review) => $review['review'] !== '')
                             ->values()
                             ->all();
+
+                        Cache::put(self::REVIEWS_CACHE_KEY, $reviews, now()->addDay());
                     }
                 }
             } catch (ConnectionException) {
                 Log::warning('Connection failed while fetching the published feedback sheet.');
                 $feedbackError = 'Customer feedback could not be loaded. Please try again later.';
             }
+        }
+
+        if ($feedbackError !== null && is_array($cachedReviews)) {
+            Log::info('Serving cached approved customer feedback after the published sheet could not be loaded.');
+            $reviews = $cachedReviews;
+            $feedbackError = null;
         }
 
         return view('feedback', [
@@ -73,19 +85,34 @@ class FeedbackController extends Controller
             $payload = $payload['data'];
         } elseif (isset($payload['values']) && is_array($payload['values'])) {
             $values = $payload['values'];
-            $headers = array_shift($values);
+
+            // Locate header row skipping table meta headers
+            $headers = null;
+            while (! empty($values)) {
+                $possibleHeaders = array_shift($values);
+                if (! is_array($possibleHeaders)) {
+                    continue;
+                }
+
+                $joined = strtolower(implode(' ', array_map('strval', $possibleHeaders)));
+                if (str_contains($joined, 'timestamp') || str_contains($joined, 'name') || str_contains($joined, 'feedback')) {
+                    $headers = $possibleHeaders;
+                    break;
+                }
+            }
 
             if (! is_array($headers)) {
                 return null;
             }
 
+            // Assign clean fallback keys for empty column names
             $headers = array_map(
-                fn ($header) => is_scalar($header) ? trim((string) $header) : '',
-                $headers
+                fn ($header, $index) => (is_scalar($header) && trim((string) $header) !== '')
+                    ? trim((string) $header)
+                    : 'column_' . $index,
+                $headers,
+                array_keys($headers)
             );
-            if ($headers === [] || in_array('', $headers, true)) {
-                return null;
-            }
 
             $payload = array_map(function ($row) use ($headers) {
                 if (! is_array($row)) {
@@ -96,6 +123,8 @@ class FeedbackController extends Controller
 
                 return array_combine($headers, $row);
             }, $values);
+
+            $payload = array_values(array_filter($payload));
         }
 
         return array_is_list($payload) ? $payload : null;
@@ -107,9 +136,11 @@ class FeedbackController extends Controller
             $normalizedKey = strtolower(preg_replace('/[^a-z]/i', '', (string) $key));
             $isApprovalColumn = in_array($normalizedKey, ['status', 'approved', 'approvalstatus', 'approvastatus'], true);
 
-            if ($isApprovalColumn && is_scalar($value)
-                && in_array(strtolower(trim((string) $value)), ['yes', 'approved'], true)) {
-                return true;
+            if ($isApprovalColumn && is_scalar($value)) {
+                $val = strtolower(trim((string) $value));
+                if (in_array($val, ['yes', 'approved', 'true', '1'], true)) {
+                    return true;
+                }
             }
         }
 

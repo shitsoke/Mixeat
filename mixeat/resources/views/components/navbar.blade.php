@@ -1,4 +1,4 @@
-﻿@php
+@php
     $navItems = [
         ['label' => 'Home', 'route' => 'home'],
         ['label' => 'Rice Bowl', 'route' => 'menu', 'parameters' => ['category' => 'Food Bowls']],

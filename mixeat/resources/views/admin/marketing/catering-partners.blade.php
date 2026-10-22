@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('content')
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">

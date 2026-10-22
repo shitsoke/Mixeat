@@ -1,24 +1,27 @@
 @forelse($orders as $order)
     <tr>
-        <td class="py-4 px-4 font-bold text-[#090909]">{{ $order->order_number }}</td>
-        <td class="py-4 px-4 text-[#555555]">
+        <td class="py-4 px-4 order-number">{{ $order->order_number }}</td>
+        <td class="py-4 px-4 order-type">
+            @if ($order->user?->name)
+                <p class="order-customer">{{ $order->user->name }}</p>
+            @endif
             <p>{{ $order->type }}</p>
             @if ($order->type === 'Pickup' && $order->pickup_at)
-                <p class="mt-1 text-xs">Pickup: {{ $order->pickup_at->format('M j, Y g:i A') }}</p>
+                <p class="mt-1 text-xs order-muted">Pickup: {{ $order->pickup_at->format('M j, Y g:i A') }}</p>
             @elseif ($order->type === 'Delivery')
-                <p class="mt-1 text-xs">{{ $order->delivery_method }}</p>
+                <p class="mt-1 text-xs order-muted">{{ $order->delivery_method }}</p>
                 @if ($order->delivery_address)
-                    <p class="mt-1 max-w-xs text-xs">{{ $order->delivery_address }}</p>
+                    <p class="mt-1 max-w-xs text-xs order-muted">{{ $order->delivery_address }}</p>
                 @endif
             @endif
             @if ($order->payment_method)
-                <p class="mt-1 text-xs">Payment: {{ $order->payment_method }}</p>
+                <p class="mt-1 text-xs order-muted">Payment: {{ $order->payment_method }}</p>
             @endif
             @if ($order->gcash_reference_number)
-                <p class="mt-1 text-xs">GCash reference: {{ $order->gcash_reference_number }}</p>
+                <p class="mt-1 text-xs order-muted">GCash reference: {{ $order->gcash_reference_number }}</p>
             @endif
         </td>
-        <td class="py-4 px-4 font-bold text-[#090909]">&#8369;{{ number_format($order->total, 2) }}</td>
+        <td class="py-4 px-4 order-total">&#8369;{{ number_format($order->total, 2) }}</td>
         <td class="py-4 px-4 text-center">
             @if($order->status === 'Pending')
                 <span class="inline-block rounded-full bg-[#FFF3CD] px-3 py-1 text-xs font-bold text-[#856404]">Pending</span>
@@ -65,6 +68,6 @@
     </tr>
 @empty
     <tr>
-        <td colspan="5" class="py-6 text-center text-sm font-medium text-[#777777]">No orders logged for this branch.</td>
+        <td colspan="5" class="py-6 text-center text-sm font-medium text-[#B8B8B8]">No orders logged for this branch.</td>
     </tr>
 @endforelse

@@ -1,4 +1,4 @@
-﻿<footer class="mt-20 border-t border-[#333333] bg-[#111111] text-white">
+<footer class="mt-20 border-t border-[#333333] bg-[#111111] text-white">
     <div class="mixeat-shell grid gap-10 px-4 py-14 md:grid-cols-2 lg:grid-cols-5">
         <div class="lg:col-span-2">
             <div class="mb-4 flex items-center gap-3">

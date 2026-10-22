@@ -61,13 +61,13 @@
         <div class="mb-10 rounded-[28px] border border-[#333333] bg-[#201D19] p-6 shadow-sm">
             <div class="mb-4 flex items-center justify-between">
                 <h2 class="text-xl font-bold text-[#FFFFFF]">Branch Orders</h2>
-                <span id="live-orders-status" role="status" class="rounded-full bg-[#FBAB18] px-3 py-1 text-xs font-bold text-[#FFFFFF]">Live updates</span>
+                <span id="live-orders-status" role="status" class="rounded-full bg-[#FBAB18] px-3 py-1 text-xs font-bold text-[#111111]">Live updates</span>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="branch-orders-table w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-[#333333] text-xs font-bold uppercase tracking-wider text-[#777777]">
+                        <tr class="border-b border-[#333333] text-xs font-bold uppercase tracking-wider text-[#C5C5C5]">
                             <th class="py-3 px-4">Order #</th>
                             <th class="py-3 px-4">Type</th>
                             <th class="py-3 px-4">Total</th>
@@ -75,7 +75,7 @@
                             <th class="py-3 px-4 text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="live-orders-table" class="divide-y divide-[#333333]/60 text-sm font-medium">
+                    <tbody id="live-orders-table" class="divide-y divide-[#333333] text-sm font-medium">
                         @include('admin.supervisors.partials.order-rows', ['orders' => $orders])
                     </tbody>
                 </table>

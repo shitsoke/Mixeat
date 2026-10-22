@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ($branch->exists ? 'Edit Branch' : 'Add Branch').' | MixEat')
 

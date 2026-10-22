@@ -27,6 +27,7 @@ class SupervisorController extends Controller
 
         // Fetch orders for this branch
         $orders = Order::where('branch_id', $branch->id)
+            ->with('user')
             ->latest()
             ->get();
 
@@ -52,7 +53,7 @@ class SupervisorController extends Controller
         abort_unless($user && $user->isSupervisor() && $user->branch_id, 403, 'Unauthorized access or no branch assigned.');
 
         $branch = $user->branch;
-        $orders = Order::where('branch_id', $branch->id)->latest()->get();
+        $orders = Order::where('branch_id', $branch->id)->with('user')->latest()->get();
         $todayQuery = Order::where('branch_id', $branch->id)
             ->whereDate('created_at', Carbon::today('Asia/Manila'));
 

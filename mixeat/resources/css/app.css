@@ -159,6 +159,88 @@ select {
     }
 }
 
+/* Customer Dashboard (My Orders & Activity) — scoped dark theme rules */
+.customer-orders {
+    background-color: #111111;
+}
+
+/* Order Tracking page — scoped dark theme rules */
+.order-tracking {
+    background-color: #111111;
+}
+
+.order-tracking .tracking-status-container {
+    background-color: #201D19;
+    border-color: #333333;
+}
+
+.order-tracking .tracking-inner-card {
+    background-color: #1A1A1A;
+    border-color: #333333;
+}
+
+.order-tracking .tracking-step {
+    border-width: 1px;
+    border-style: solid;
+}
+
+.order-tracking .tracking-step-current {
+    background-color: #FBAB18;
+    border-color: #FBAB18;
+    color: #111111;
+}
+
+.order-tracking .tracking-step-done {
+    background-color: #22C55E;
+    border-color: #22C55E;
+    color: #111111;
+}
+
+.order-tracking .tracking-step-upcoming {
+    background-color: #333333;
+    border-color: #333333;
+    color: #B8B8B8;
+}
+
+.order-tracking .tracking-step-cancelled {
+    background-color: #EF4444;
+    border-color: #EF4444;
+    color: #FFFFFF;
+}
+
+/* Branch Orders table (Supervisor Dashboard) — scoped readability rules */
+.branch-orders-table thead th {
+    color: #C5C5C5;
+    border-color: #333333;
+}
+
+.branch-orders-table tbody td {
+    border-color: #333333;
+}
+
+.branch-orders-table .order-number {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+.branch-orders-table .order-type {
+    color: #E5E5E5;
+}
+
+.branch-orders-table .order-customer {
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.branch-orders-table .order-muted {
+    color: #B8B8B8;
+}
+
+.branch-orders-table .order-total {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
 .catering-partner-card {
     display: flex;
     width: clamp(12rem, 22vw, 18rem);

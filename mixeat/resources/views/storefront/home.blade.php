@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'MixEat | Good Food. Great Moments.')
 
@@ -192,7 +192,11 @@
 
                             const details = document.createElement('p');
                             details.className = 'mt-2 text-sm text-[#B8B8B8]';
-                            details.textContent = `${order.type}${order.pickup_at ? ` · Pickup ${order.pickup_at}` : ''} · ?${order.total}`;
+                            const formattedTotal = new Intl.NumberFormat('en-PH', {
+                                style: 'currency',
+                                currency: 'PHP',
+                            }).format(Number(order.total));
+                            details.textContent = `${order.type}${order.pickup_at ? ` · Pickup ${order.pickup_at}` : ''} · ${formattedTotal}`;
                             link.append(header, details);
                             tracker.append(link);
                         });

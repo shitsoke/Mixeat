@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Checkout | MixEat')
 
@@ -103,7 +103,7 @@
                         @error('payment_method')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                         <div id="qr-payment-details" class="{{ old('payment_method', $subtotal > $cashPaymentMaximum ? 'QR Code' : 'Cash') === 'QR Code' ? '' : 'hidden' }} mt-5 rounded-2xl border border-[#333333] bg-[#1A1A1A] p-5 text-center">
                             <p class="mb-3 text-sm font-bold text-[#FFFFFF]">Scan this GCash QR code to pay</p>
-                            <img src="{{ asset('images/Gcash.jpeg') }}" alt="MixEat GCash payment QR code" class="mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain">
+                            <img src="{{ asset('images/mixeat qr.jpeg') }}" alt="MixEat GCash payment QR code" class="mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain">
                             <p class="mt-3 text-xs text-[#B8B8B8]">Please verify the recipient and payment amount in GCash before confirming your payment.</p>
                             <div class="mt-5 text-left">
                                 <label for="gcash_reference_number" class="mb-2 block text-sm font-semibold text-[#FFFFFF]">GCash reference number</label>
@@ -116,7 +116,7 @@
                 </div>
 
                 <aside class="rounded-[30px] border border-[#333333] bg-[#201D19] p-6 shadow-[0_14px_40px_rgba(229,169,0,0.10)]">
-                    <h2 class="text-2xl font-black text-[#FFFFFF]">6. Order Summary</h2>
+                    <h2 class="text-2xl font-black text-[#FFFFFF]">Order Summary</h2>
                     <div class="mt-6 space-y-4">
                         @foreach ($items as $item)
                             <div class="flex items-start gap-4 border-b border-dashed border-[#333333] pb-4">

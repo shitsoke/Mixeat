@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -27,7 +26,6 @@ class SupervisorController extends Controller
 
         // Fetch orders for this branch
         $orders = Order::where('branch_id', $branch->id)
-            ->with('user')
             ->latest()
             ->get();
 
@@ -53,7 +51,7 @@ class SupervisorController extends Controller
         abort_unless($user && $user->isSupervisor() && $user->branch_id, 403, 'Unauthorized access or no branch assigned.');
 
         $branch = $user->branch;
-        $orders = Order::where('branch_id', $branch->id)->with('user')->latest()->get();
+        $orders = Order::where('branch_id', $branch->id)->latest()->get();
         $todayQuery = Order::where('branch_id', $branch->id)
             ->whereDate('created_at', Carbon::today('Asia/Manila'));
 
@@ -175,22 +173,32 @@ class SupervisorController extends Controller
         return back()->with('admin_status', "Order {$order->order_number} accepted and set to Preparing.");
     }
 
-    public function markReadyForPickup(Order $order)
+        public function markReadyForPickup(Order $order)
     {
         $user = auth()->user();
         abort_unless($user && $user->isSupervisor() && $user->branch_id === $order->branch_id, 403);
 
+        $previousStatus = $order->status;
         $order->update(['status' => 'Ready for Pickup']);
+        $order->loadMissing('user', 'branch');
+        if ($order->user && $order->status !== $previousStatus) {
+            $order->user->notify(new OrderStatusUpdated($order, $previousStatus));
+        }
 
         return back()->with('admin_status', "Order {$order->order_number} marked as Ready for Pickup.");
     }
 
-    public function markCompleted(Order $order)
+        public function markCompleted(Order $order)
     {
         $user = auth()->user();
         abort_unless($user && $user->isSupervisor() && $user->branch_id === $order->branch_id, 403);
 
+        $previousStatus = $order->status;
         $order->update(['status' => 'Completed']);
+        $order->loadMissing('user', 'branch');
+        if ($order->user && $order->status !== $previousStatus) {
+            $order->user->notify(new OrderStatusUpdated($order, $previousStatus));
+        }
 
         return back()->with('admin_status', "Order {$order->order_number} marked as Completed.");
     }

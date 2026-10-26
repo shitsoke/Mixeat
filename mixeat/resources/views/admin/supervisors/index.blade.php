@@ -4,9 +4,9 @@
 
 @section('content')
 <section class="py-10">
-    <div class="mixeat-shell px-4">
+    <div class="supervisor-dashboard">
         <!-- Header with Export Button -->
-        <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="supervisor-header mb-6">
             <div>
                 <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#FBAB18]">Supervisor</p>
                 <h1 class="mt-1 text-3xl font-black text-[#FFFFFF] md:text-4xl">Supervisor Dashboard</h1>
@@ -15,7 +15,7 @@
 
             <!-- Export Daily Sales Report Excel Button -->
             <div>
-                <a href="{{ route('admin.supervisors.export-daily-sales') }}" class="inline-flex items-center gap-2 rounded-full bg-[#107C41] px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-[#0E6C38]">
+                <div class="supervisor-header-actions"><div class="relative" id="notif-bell-container"><button id="notif-bell-btn" type="button" class="relative inline-flex items-center justify-center rounded-full bg-[#201D19] border border-[#333333] p-2.5 text-[#FFFFFF]"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg><span id="notif-count" class="absolute -top-1 -right-1 hidden h-5 w-5 items-center justify-center rounded-full bg-[#FBAB18] text-[10px] font-bold text-[#111111]">0</span></button><div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 max-h-96 overflow-auto rounded-2xl border border-[#333333] bg-[#201D19] shadow-lg z-50"><div class="px-4 py-3 border-b border-[#333333]"><p class="text-sm font-bold text-[#FFFFFF]">Notifications</p></div><div id="notif-list" class="divide-y divide-[#333333]"></div><div id="notif-empty" class="px-4 py-4 text-center text-sm text-[#B8B8B8] hidden">No new notifications</div></div></div><a href="{{ route('admin.supervisors.export-daily-sales') }}" class="inline-flex items-center gap-2 rounded-full bg-[#107C41] px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-[#0E6C38]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
@@ -31,7 +31,7 @@
         @endif
 
         <!-- Responsive Daily Inventory & Revenue Metrics Grid -->
-        <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section class="supervisor-stats">
             <!-- Today's Orders -->
             <div class="rounded-[20px] border border-[#333333] bg-[#1A1A1A] p-5 shadow-sm">
                 <p class="text-xs font-bold uppercase tracking-wider text-[#777777]">Today's Orders</p>
@@ -58,7 +58,7 @@
         </div>
 
         <!-- Branch Orders Section -->
-        <div class="mb-10 rounded-[28px] border border-[#333333] bg-[#201D19] p-6 shadow-sm">
+        <div class="supervisor-orders rounded-[28px] border border-[#333333] bg-[#201D19] p-6 shadow-sm">
             <div class="mb-4 flex items-center justify-between">
                 <h2 class="text-xl font-bold text-[#FFFFFF]">Branch Orders</h2>
                 <span id="live-orders-status" role="status" class="rounded-full bg-[#FBAB18] px-3 py-1 text-xs font-bold text-[#111111]">Live updates</span>
@@ -83,7 +83,7 @@
         </div>
 
         <!-- Menu Availability Section -->
-        <div class="rounded-[28px] border border-[#333333] bg-[#201D19] p-6 shadow-sm">
+        <div class="supervisor-menu rounded-[28px] border border-[#333333] bg-[#201D19] p-6 shadow-sm">
             <h2 class="mb-4 text-xl font-bold text-[#FFFFFF]">Menu Availability</h2>
 
             <div class="overflow-x-auto">
@@ -134,6 +134,78 @@
         </div>
     </div>
 </section>
+
+@push('scripts')
+<script>
+(function(){
+    const notifBellBtn = document.getElementById('notif-bell-btn');
+    const notifDropdown = document.getElementById('notif-dropdown');
+    const notifCount = document.getElementById('notif-count');
+    const notifList = document.getElementById('notif-list');
+    const notifEmpty = document.getElementById('notif-empty');
+    let lastCount = 0, audioEnabled = false;
+    window.addEventListener('click', function(){ audioEnabled = true; }, {once:true});
+    function playBeep(){
+        if(!audioEnabled) return;
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioCtx();
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.frequency.value = 880; o.type = 'sine';
+            g.gain.setValueAtTime(0.001, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime+0.01);
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.2);
+            o.start(ctx.currentTime); o.stop(ctx.currentTime+0.2);
+        } catch(e){}
+    }
+    if(notifBellBtn){
+        notifBellBtn.addEventListener('click', function(e){ e.stopPropagation(); notifDropdown.classList.toggle('hidden'); });
+        document.addEventListener('click', function(){ notifDropdown.classList.add('hidden'); });
+        notifDropdown.addEventListener('click', function(e){ e.stopPropagation(); });
+    }
+    async function fetchNotifications(){
+        try {
+            const res = await fetch("{{ route('admin.supervisors.notifications') }}", {headers:{'Accept':'application/json'}, credentials:'same-origin'});
+            if(!res.ok) return;
+            const data = await res.json();
+            const count = data.count || 0;
+            if(count>0){ notifCount.textContent = count>99?'99+':count; notifCount.classList.remove('hidden'); notifCount.classList.add('flex'); }
+            else { notifCount.classList.add('hidden'); notifCount.classList.remove('flex'); }
+            if(count>lastCount){ playBeep(); }
+            lastCount = count;
+            notifList.innerHTML = '';
+            if(!data.notifications || data.notifications.length===0){ notifEmpty.classList.remove('hidden'); }
+            else {
+                notifEmpty.classList.add('hidden');
+                data.notifications.forEach(function(n){
+                    const d = n.data || {};
+                    const item = document.createElement('div');
+                    item.className = 'px-4 py-3 hover:bg-[#2a2720]';
+                    item.innerHTML = '<p class="text-sm font-bold text-[#FFFFFF]">' + (d.message||'New Order Received!') + '</p>' +
+                        '<p class="text-xs text-[#B8B8B8] mt-1">Order ' + (d.order_number||'') + ' · ' + (d.branch_name||'') + '</p>' +
+                        '<p class="text-xs text-[#B8B8B8] mt-1">Total: ₱' + Number(d.total||0).toFixed(2) + '</p>' +
+                        '<p class="text-xs text-[#777777] mt-1">' + (n.created_at||'') + '</p>' +
+                        '<div class="flex gap-2 mt-2"><a href="{{ url("/supervisors/notifications") }}/' + n.id + '/order" class="text-xs font-bold text-[#FBAB18] hover:underline">View Order</a><button data-read="' + n.id + '" class="text-xs text-[#B8B8B8] hover:text-[#FFFFFF]">Mark as Read</button></div>';
+                    notifList.appendChild(item);
+                });
+                notifList.querySelectorAll('[data-read]').forEach(function(btn){
+                    btn.addEventListener('click', async function(e){
+                        e.preventDefault();
+                        const id = btn.getAttribute('data-read');
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                        await fetch("{{ url('/admin/supervisors/notifications') }}/" + id + '/read', { method: 'POST', headers: {'X-CSRF-TOKEN': token, 'Accept': 'application/json'}, credentials: 'same-origin' });
+                        fetchNotifications();
+                    });
+                });
+            }
+        } catch(e){}
+    }
+    fetchNotifications(); setInterval(fetchNotifications, 5000);
+})();
+</script>
+@endpush
 @endsection
 
 @push('scripts')

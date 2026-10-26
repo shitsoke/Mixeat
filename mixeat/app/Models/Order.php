@@ -21,6 +21,7 @@ class Order extends Model
         'delivery_address',
         'payment_method',
         'gcash_reference_number',
+        'decline_reason',
     ];
 
     protected $casts = [

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
+use App\Notifications\OrderStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -227,5 +228,59 @@ class SupervisorController extends Controller
         ]);
 
         return back()->with('admin_status', $product->name . ' status updated.');
+    }
+
+    public function notifications(Request $request)
+    {
+        $user = $request->user();
+        abort_unless($user && $user->isSupervisor() && $user->branch_id, 403);
+
+        $notifications = $user->unreadNotifications()
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'data' => $notification->data,
+                    'created_at' => $notification->created_at ? $notification->created_at->diffForHumans() : null,
+                    'read_at' => $notification->read_at,
+                ];
+            });
+
+        return response()->json([
+            'count' => $user->unreadNotifications()->count(),
+            'notifications' => $notifications,
+        ]);
+    }
+
+    public function markNotificationRead(Request $request, $id)
+    {
+        $user = $request->user();
+        abort_unless($user && $user->isSupervisor() && $user->branch_id, 403);
+
+        $notification = $user->notifications()->findOrFail($id);
+        $notification->markAsRead();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function viewNotificationOrder(Request $request, $id)
+    {
+        $user = $request->user();
+        abort_unless($user && $user->isSupervisor() && $user->branch_id, 403);
+
+        $notification = $user->notifications()->findOrFail($id);
+        $notification->markAsRead();
+
+        $orderId = $notification->data['order_id'] ?? null;
+        if (!$orderId) {
+            abort(404);
+        }
+
+        $order = Order::with('items.product', 'user')->findOrFail($orderId);
+        abort_unless($order->branch_id === $user->branch_id, 403);
+
+        return redirect()->route('supervisors.index')->with('admin_status', "Viewing order {$order->order_number}");
     }
 }

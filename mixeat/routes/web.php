@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\AdminController;
@@ -116,7 +116,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     });
 
     // 1. Marketing Admin Routes
-    Route::middleware(['role:marketing'])->group(function () {
+    Route::middleware(['role:marketing,marketing_admin'])->group(function () {
         // Promotions
         Route::get('/promotion', [AdminController::class, 'promotion'])->name('promotion');
         Route::put('/promotion', [AdminController::class, 'updatePromotion'])->name('promotion.update');
@@ -173,6 +173,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::patch('/supervisors/orders/{order}/ready', [SupervisorController::class, 'markReadyForPickup'])->name('supervisors.orders.ready');
         Route::patch('/supervisors/orders/{order}/complete', [SupervisorController::class, 'markCompleted'])->name('supervisors.orders.complete');
         Route::patch('/supervisors/orders/{order}/decline', [SupervisorController::class, 'declineOrder'])->name('supervisors.orders.decline');
+        
+        // Supervisor Notifications
+        Route::get('/supervisors/notifications', [SupervisorController::class, 'notifications'])->name('supervisors.notifications');
+        Route::post('/supervisors/notifications/{id}/read', [SupervisorController::class, 'markNotificationRead'])->name('supervisors.notifications.read');
+        Route::get('/supervisors/notifications/{id}/order', [SupervisorController::class, 'viewNotificationOrder'])->name('supervisors.notifications.order');
     });
 
 });

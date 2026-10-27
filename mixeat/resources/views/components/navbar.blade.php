@@ -98,18 +98,34 @@
     </div>
 
     <!-- Mobile Drawer / Secondary Nav -->
-    @unless ($isMarketingAdmin || $isSupervisor)
+    @unless ($isMarketingAdmin)
         <div id="mobile-navigation" class="hidden border-t border-[#333333] bg-[#111111] px-4 py-3 lg:hidden">
             <div class="mixeat-shell flex flex-wrap items-center gap-2 pb-1">
-                @foreach ($navItems as $item)
-                    <a href="{{ route($item['route'], $item['parameters'] ?? []) }}" class="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold no-underline {{ request()->routeIs($item['route']) ? 'bg-[#FBAB18] text-[#111111]' : 'text-[#B8B8B8] hover:text-white' }}" data-menu-link>
-                        {{ $item['label'] }}
+                @if ($isSupervisor)
+                    <a href="{{ route('admin.supervisors.index') }}" class="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold no-underline {{ request()->routeIs('admin.supervisors.index') ? 'bg-[#FBAB18] text-[#111111]' : 'text-[#B8B8B8] hover:text-white' }}" data-menu-link>
+                        Branch Menu Availability
                     </a>
-                @endforeach
-                <div class="mt-2 w-full pt-2 border-t border-[#333333] flex items-center justify-between">
-                    <a href="{{ route('catering') }}" class="rounded-full bg-[#FBAB18] px-4 py-2 text-xs font-heading font-extrabold text-[#111111]">BOOK CATERING</a>
+                @else
+                    @foreach ($navItems as $item)
+                        <a href="{{ route($item['route'], $item['parameters'] ?? []) }}" class="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold no-underline {{ request()->routeIs($item['route']) ? 'bg-[#FBAB18] text-[#111111]' : 'text-[#B8B8B8] hover:text-white' }}" data-menu-link>
+                            {{ $item['label'] }}
+                        </a>
+                    @endforeach
+                @endif
+                <div class="mt-2 w-full pt-2 border-t border-[#333333] flex items-center justify-between flex-wrap gap-2">
+                    @if ($isSupervisor)
+                        <span class="text-xs text-[#B8B8B8]">{{ auth()->user()->name }}</span>
+                    @else
+                        <a href="{{ route('catering') }}" class="rounded-full bg-[#FBAB18] px-4 py-2 text-xs font-heading font-extrabold text-[#111111]">BOOK CATERING</a>
+                    @endif
                     @auth
-                        <a href="{{ route('profile') }}" class="rounded-full border border-[#333333] bg-[#1A1A1A] px-4 py-2 text-xs font-bold text-white">Profile</a>
+                        @if (!$isSupervisor)
+                            <a href="{{ route('profile') }}" class="rounded-full border border-[#333333] bg-[#1A1A1A] px-4 py-2 text-xs font-bold text-white">Profile</a>
+                        @endif
+                        <form action="{{ route('logout') }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="rounded-full border border-[#333333] bg-[#1A1A1A] px-4 py-2 text-xs font-bold text-white">Logout</button>
+                        </form>
                     @else
                         <a href="{{ route('login') }}" class="rounded-full border border-[#333333] bg-[#1A1A1A] px-4 py-2 text-xs font-bold text-white">Login</a>
                     @endauth

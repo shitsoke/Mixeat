@@ -22,6 +22,18 @@ document.addEventListener('DOMContentLoaded', () => {
 		menu.querySelectorAll('[data-menu-link]').forEach((link) => {
 			link.addEventListener('click', closeMenu);
 		});
+
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') {
+				closeMenu();
+			}
+		});
+
+		document.addEventListener('click', (e) => {
+			if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+				closeMenu();
+			}
+		});
 	}
 
 	const promotionCarousel = document.querySelector('[data-home-promotion-carousel]');

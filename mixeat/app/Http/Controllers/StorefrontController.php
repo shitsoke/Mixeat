@@ -299,8 +299,9 @@ class StorefrontController extends Controller
         $branchId = $this->getActiveBranchId();
 
         $order = DB::transaction(function () use ($items, $validated, $subtotal, $branchId) {
-            $orderCount = Order::count() + 1;
-            $orderNumber = 'MX-'.str_pad($orderCount, 6, '0', STR_PAD_LEFT);
+            $maxOrder = Order::lockForUpdate()->select('order_number')->orderByRaw('CAST(SUBSTRING(order_number, 4) AS UNSIGNED) DESC')->first();
+            $nextNumber = $maxOrder && $maxOrder->order_number ? ((int) substr($maxOrder->order_number, 3)) + 1 : 1;
+            $orderNumber = 'MX-'.str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
             $order = Order::create([
                 'order_number' => $orderNumber,

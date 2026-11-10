@@ -25,7 +25,7 @@
         <h1>Your session has expired</h1>
         <p>The form was not submitted because this page had been open too long. Reopen the page and sign in again if prompted. Any unsaved changes may need to be entered again.</p>
         <div class="actions">
-            <a class="primary" href="{{ route('admin.catering.marketing') }}">Reopen Catering Admin</a>
+            <a class="primary" href="{{ route('home') }}">Reopen MixEat</a>
             <a href="{{ route('login') }}">Sign in</a>
             <a href="{{ route('home') }}">Back to MixEat</a>
         </div>

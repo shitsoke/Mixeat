@@ -38,7 +38,7 @@
                     </div>
                     <div class="md:col-span-2">
                         <label class="mb-2 block text-sm font-semibold text-[#E5E5E5]">Phone Number</label>
-                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="Phone Number" class="w-full rounded-2xl border border-[#333333] bg-[#1A1A1A] px-4 py-3 text-sm text-white placeholder-[#999999] focus:border-[#FBAB18] focus:outline-none" required />
+                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="Phone Number" inputmode="numeric" pattern="[0-9]+" maxlength="20" autocomplete="tel" oninput="this.value = this.value.replace(/\D/g, '')" class="w-full rounded-2xl border border-[#333333] bg-[#1A1A1A] px-4 py-3 text-sm text-white placeholder-[#999999] focus:border-[#FBAB18] focus:outline-none" required />
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-[#E5E5E5]">Password</label>
@@ -59,5 +59,4 @@
         </div>
     </section>
 @endsection
-
 

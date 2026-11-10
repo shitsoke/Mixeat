@@ -3,6 +3,7 @@
 @section('title', 'Checkout | MixEat')
 
 @section('content')
+    @php($orderingOpen = app(\App\Services\OrderingHours::class)->isOpen())
     <section class="py-14">
         <div class="mixeat-shell px-4">
             <div class="mb-8 text-center md:text-left">
@@ -10,6 +11,10 @@
                 <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#FBAB18]">Checkout</p>
                 <h1 class="mt-2 text-4xl font-black text-[#FFFFFF]">Complete your order.</h1>
             </div>
+
+            @error('ordering_hours')
+                <div class="mb-6 rounded-2xl border border-[#FBAB18] bg-[#201D19] px-4 py-3 text-sm font-semibold text-[#FFC247]" role="alert">{{ $message }}</div>
+            @enderror
 
             <form id="checkout-form" action="{{ route('orders.place') }}" method="POST">
             @csrf
@@ -50,30 +55,17 @@
                             <input id="pickup_at" name="pickup_at" type="datetime-local" required min="{{ now()->format('Y-m-d\TH:i') }}" value="{{ old('pickup_at') }}" class="w-full rounded-2xl border border-[#333333] bg-[#1A1A1A] px-4 py-3 text-sm text-[#FFFFFF] focus:outline-none md:max-w-sm">
                             @error('pickup_at')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
-                        <div id="delivery-options" class="mt-5 hidden">
-                            <p class="mb-3 text-sm font-semibold text-[#B8B8B8]">Choose a delivery option</p>
-                            <div class="flex flex-col gap-3 md:flex-row">
-                                <label id="in-house-option" class="flex items-start gap-3 rounded-2xl border border-[#333333] bg-[#1A1A1A] px-4 py-3 text-sm font-semibold text-[#FFFFFF]">
-                                    <input type="radio" name="delivery_method" value="In-house" class="mt-0.5 h-4 w-4 accent-[#FBAB18]" @disabled($subtotal < $inHouseDeliveryMinimum)>
-                                    <span>In-house delivery <span class="block text-xs font-normal text-[#777777]">Minimum purchase: &#8369;{{ number_format($inHouseDeliveryMinimum, 2) }}</span></span>
-                                </label>
-                                <label class="flex items-start gap-3 rounded-2xl border border-[#333333] bg-[#1A1A1A] px-4 py-3 text-sm font-semibold text-[#FFFFFF]">
-                                    <input type="radio" name="delivery_method" value="Maxim" class="mt-0.5 h-4 w-4 accent-[#FBAB18]">
-                                    <span>Deliver via Maxim <span class="block text-xs font-normal text-[#777777]">You will shoulder the Maxim delivery fee.</span></span>
-                                </label>
-                            </div>
-                            <p id="delivery-method-error" class="mt-2 text-sm text-red-600">@error('delivery_method'){{ $message }}@enderror</p>
-                        </div>
                     </div>
 
                     <div class="rounded-[30px] border border-[#333333] bg-[#201D19] p-6 shadow-[0_14px_40px_rgba(229,169,0,0.10)]">
                         <div class="flex items-center justify-between gap-4">
                             <h2 class="text-2xl font-black text-[#FFFFFF]">3. Branch</h2>
-                            <a href="{{ route('branches') }}" class="text-sm font-semibold text-[#FBAB18]">Change Branch</a>
                         </div>
                         <div class="mt-5 rounded-[24px] bg-[#1A1A1A] p-5">
-                            <h3 class="text-xl font-black text-[#FFFFFF]">{{ $selectedBranch['name'] }}</h3>
-                            <p class="mt-2 text-sm text-[#B8B8B8]">{{ $selectedBranch['address'] }}</p>
+                            <p class="text-xs font-bold uppercase tracking-wider text-[#FBAB18]">Default order branch</p>
+                            <h3 class="mt-1 text-xl font-black text-[#FFFFFF]">{{ $defaultOrderBranch->name }}</h3>
+                            <p class="mt-2 text-sm text-[#B8B8B8]">{{ $defaultOrderBranch->address }}</p>
+                            <p class="mt-3 text-sm text-[#B8B8B8]"><strong class="text-white">Opening Hours:</strong> {{ $defaultOrderBranch->opening_hours }}</p>
                         </div>
                     </div>
 
@@ -157,8 +149,8 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#FBAB18] px-6 py-3.5 text-base font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18]">
-                        Place Order
+                    <button type="submit" data-ordering-action="place-order" data-ordering-open-label="Place Order" @disabled(!$orderingOpen) class="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#FBAB18] px-6 py-3.5 text-base font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18] disabled:cursor-not-allowed disabled:bg-[#333333] disabled:text-[#B8B8B8]">
+                        {{ $orderingOpen ? 'Place Order' : 'Online Ordering Closed' }}
                     </button>
                 </aside>
             </div>
@@ -169,12 +161,10 @@
         (() => {
             const form = document.getElementById('checkout-form');
             const orderTypeRadios = form.querySelectorAll('input[name="order_type"]');
-            const deliveryMethodRadios = form.querySelectorAll('input[name="delivery_method"]');
             const pickupAt = document.getElementById('pickup_at');
             const deliveryAddress = document.getElementById('delivery_address');
             const subtotal = Number(@json($subtotal));
             const pickupSchedule = document.getElementById('pickup-schedule');
-            const deliveryOptions = document.getElementById('delivery-options');
             const deliveryAddressSection = document.getElementById('delivery-address-section');
             const deliveryAddressHint = document.getElementById('delivery-address-hint');
             const cashPayment = document.getElementById('cash-payment');
@@ -184,20 +174,12 @@
             const qrPaymentDetails = document.getElementById('qr-payment-details');
             const gcashReferenceNumber = document.getElementById('gcash_reference_number');
             const deliveryFeeSummary = document.getElementById('delivery-fee-summary');
-            const inHouseOption = form.querySelector('input[value="In-house"]');
-            const inHouseLabel = document.getElementById('in-house-option');
-            const inHouseMinimum = Number(@json($inHouseDeliveryMinimum));
             const cashMaximum = Number(@json($cashPaymentMaximum));
             const oldOrderType = @json(old('order_type', 'Pickup'));
-            const oldDeliveryMethod = @json(old('delivery_method'));
             const oldPaymentMethod = @json(old('payment_method'));
 
             if (oldOrderType === 'Delivery') {
                 form.querySelector('input[name="order_type"][value="Delivery"]').checked = true;
-            }
-            const previousDeliveryMethod = Array.from(deliveryMethodRadios).find((radio) => radio.value === oldDeliveryMethod);
-            if (previousDeliveryMethod && !(previousDeliveryMethod.value === 'In-house' && subtotal < inHouseMinimum)) {
-                previousDeliveryMethod.checked = true;
             }
             const previousPaymentMethod = Array.from(form.querySelectorAll('input[name="payment_method"]'))
                 .find((radio) => radio.value === oldPaymentMethod);
@@ -213,24 +195,13 @@
                 pickupSchedule.classList.toggle('hidden', isDelivery);
                 pickupAt.required = !isDelivery;
                 pickupAt.disabled = isDelivery;
-                deliveryOptions.classList.toggle('hidden', !isDelivery);
                 deliveryAddressSection.classList.toggle('hidden', !isDelivery);
                 deliveryAddressHint.classList.toggle('hidden', isDelivery);
                 deliveryAddress.required = isDelivery;
                 deliveryAddress.disabled = !isDelivery;
-                deliveryMethodRadios.forEach((radio) => {
-                    radio.required = isDelivery;
-                    radio.disabled = !isDelivery || (radio.value === 'In-house' && subtotal < inHouseMinimum);
-                });
-                inHouseLabel.classList.toggle('cursor-not-allowed', subtotal < inHouseMinimum);
-                inHouseLabel.classList.toggle('opacity-50', subtotal < inHouseMinimum);
-
-                const selectedDeliveryMethod = form.querySelector('input[name="delivery_method"]:checked')?.value;
                 deliveryFeeSummary.textContent = !isDelivery
                     ? 'None'
-                    : selectedDeliveryMethod === 'Maxim'
-                        ? 'Paid directly to Maxim'
-                        : 'Not included; confirmed by the branch';
+                    : 'In-house delivery; fee confirmed by the branch';
 
                 const cashRequired = subtotal > cashMaximum;
                 cashPayment.disabled = cashRequired;
@@ -249,11 +220,8 @@
             };
 
             orderTypeRadios.forEach((radio) => radio.addEventListener('change', updateCheckout));
-            deliveryMethodRadios.forEach((radio) => radio.addEventListener('change', updateCheckout));
             form.querySelectorAll('input[name="payment_method"]').forEach((radio) => radio.addEventListener('change', updateCheckout));
             updateCheckout();
         })();
     </script>
 @endsection
-
-

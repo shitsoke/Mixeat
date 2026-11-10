@@ -43,12 +43,21 @@
         <div>
             <h3 class="mb-4 text-base font-heading font-bold uppercase tracking-[0.08em] text-[#FBAB18]">Quick Links</h3>
             <ul class="space-y-3 text-sm text-[#B8B8B8]">
+                <li><a href="{{ route('feedback.index') }}" class="hover:text-[#FBAB18] transition">Feedback</a></li>
+                <li><a href="{{ route('about') }}" class="hover:text-[#FBAB18] transition">About</a></li>
+                <li><a href="{{ route('contact') }}" class="hover:text-[#FBAB18] transition">Contact</a></li>
+                <li><a href="{{ route('careers') }}" class="hover:text-[#FBAB18] transition">Careers</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <h3 class="mb-4 text-base font-heading font-bold uppercase tracking-[0.08em] text-[#FBAB18]">Explore</h3>
+            <ul class="space-y-3 text-sm text-[#B8B8B8]">
                 <li><a href="{{ route('home') }}" class="hover:text-[#FBAB18] transition">Home</a></li>
                 <li><a href="{{ route('menu') }}" class="hover:text-[#FBAB18] transition">Menu</a></li>
                 <li><a href="{{ route('featured') }}" class="hover:text-[#FBAB18] transition">Featured</a></li>
                 <li><a href="{{ route('branches') }}" class="hover:text-[#FBAB18] transition">Branches</a></li>
-                <li><a href="{{ route('about') }}" class="hover:text-[#FBAB18] transition">About</a></li>
-                <li><a href="{{ route('contact') }}" class="hover:text-[#FBAB18] transition">Contact</a></li>
+                <li><a href="{{ route('catering') }}" class="hover:text-[#FBAB18] transition">Catering</a></li>
             </ul>
         </div>
 
@@ -57,16 +66,12 @@
             <ul class="space-y-3 text-sm text-[#B8B8B8]">
                 <li><a href="{{ route('profile') }}" class="hover:text-[#FBAB18] transition">My Account</a></li>
                 <li><a href="{{ route('orders') }}" class="hover:text-[#FBAB18] transition">My Orders</a></li>
+                @auth
+                    @if (auth()->user()->role === 'customer')
+                        <li><a href="{{ route('customer.catering-bookings') }}" class="hover:text-[#FBAB18] transition">My Catering</a></li>
+                    @endif
+                @endauth
                 <li><a href="{{ route('cart') }}" class="hover:text-[#FBAB18] transition">Cart</a></li>
-            </ul>
-        </div>
-
-        <div>
-            <h3 class="mb-4 text-base font-heading font-bold uppercase tracking-[0.08em] text-[#FBAB18]">Contact</h3>
-            <ul class="space-y-3 text-sm text-[#B8B8B8]">
-                <li>0920 967 5537</li>
-                <li>joniesmarketingassistant@gmail.com</li>
-                <li>1058 Hernan Cortes St., Subangdaku, Mandaue City, Philippines, 6014</li>
             </ul>
         </div>
     </div>

@@ -17,7 +17,7 @@
             <input name="price" type="number" step="0.01" min="0" placeholder="Leave empty if not applicable" value="{{ old('price', $promotion['promotion_price'] ?? '') }}" class="rounded-2xl border border-[#333333] bg-[#1A1A1A] px-4 py-3">
         </label>
         <label class="grid gap-2 text-sm font-semibold">Promotion Image<input name="image" type="file" accept="image/jpeg,image/png,image/webp" class="rounded-2xl border border-[#333333] bg-[#1A1A1A] px-4 py-3"><span class="text-xs font-normal text-[#B8B8B8]">Upload a new image to replace the current promotion image.</span></label>
-        <div class="flex gap-3"><a href="{{ route('admin.products.index') }}" class="rounded-full border border-[#FBAB18] px-5 py-3 font-semibold text-[#FBAB18]">Back</a><button class="rounded-full bg-[#FBAB18] px-5 py-3 font-semibold text-[#FFFFFF]">Save Promotion</button></div>
+        <div class="flex gap-3"><a href="{{ route('admin.promotions.index') }}" class="rounded-full border border-[#FBAB18] px-5 py-3 font-semibold text-[#FBAB18]">Back</a><button class="rounded-full bg-[#FBAB18] px-5 py-3 font-semibold text-[#FFFFFF]">Save Promotion</button></div>
     </form>
 </div></div></section>
 @endsection

@@ -45,7 +45,7 @@ class StorefrontPagesTest extends TestCase
             ->assertStatus(200);
     }
 
-    public function test_food_tray_products_are_shown_in_catering_not_the_menu(): void
+    public function test_food_tray_catalog_is_shown_in_catering_not_the_menu(): void
     {
         $this->get('/menu')
             ->assertOk()
@@ -55,13 +55,17 @@ class StorefrontPagesTest extends TestCase
         $this->get('/catering')
             ->assertOk()
             ->assertSee('Party Trays & Buffet Setups')
-            ->assertSee('Chicken Meal')
-            ->assertSee('Request this tray')
-            ->assertSee('data-party-trays-toggle', false)
-            ->assertSee('aria-controls="party-trays-menu"', false)
+            ->assertSee('Pork Dishes')
+            ->assertSee('Chicken Dishes')
+            ->assertSee('Beef Dishes')
+            ->assertSee('Seafood Dishes')
+            ->assertSee('Pasta / Noodles')
+            ->assertSee('Vegetable Dishes')
+            ->assertSee('Desserts')
+            ->assertSee('data-catering-tray-category', false)
             ->assertSee('id="party-trays-menu"', false)
-            ->assertSee('class="mb-12 hidden"', false)
-            ->assertSee('service=Party%20Trays', false);
+            ->assertSee('data-tray-catalog', false)
+            ->assertSee('data-tray-add', false);
     }
 
     public function test_header_menu_link_is_labeled_food_bowls_and_filters_the_menu(): void

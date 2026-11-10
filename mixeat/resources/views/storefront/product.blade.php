@@ -3,6 +3,7 @@
 @section('title', $product['name'] . ' | MixEat')
 
 @section('content')
+    @php($orderingOpen = app(\App\Services\OrderingHours::class)->isOpen())
     <section class="py-14">
         <div class="mixeat-shell px-4">
             <a href="{{ route('menu') }}" class="mb-8 inline-flex items-center gap-2 rounded-full border border-[#333333] bg-[#201D19] px-4 py-2 text-sm font-semibold text-[#B8B8B8] transition hover:border-[#FBAB18] hover:text-[#FBAB18]">
@@ -37,7 +38,7 @@
                     </div>
 
                     @if ($product['available'] ?? true)
-                        <form action="{{ route('cart.add', ['id' => $product['id']]) }}" method="POST" id="add-to-cart-form">
+                        <form action="{{ route('cart.add', ['id' => $product['id']]) }}" method="POST" id="add-to-cart-form" data-ordering-action="add-to-cart">
                             @csrf
 
                             <!-- Optional Add-ons Section -->
@@ -83,8 +84,8 @@
                             </div>
 
                             <div class="mt-8 flex flex-col gap-4 sm:flex-row">
-                                <button type="submit" class="inline-flex flex-1 items-center justify-center rounded-full bg-[#FBAB18] px-7 py-4 text-base font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18]">
-                                    Add to Cart
+                                <button type="submit" data-ordering-open-label="Add to Cart" @disabled(!$orderingOpen) class="inline-flex flex-1 items-center justify-center rounded-full bg-[#FBAB18] px-7 py-4 text-base font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18] disabled:cursor-not-allowed disabled:bg-[#333333] disabled:text-[#B8B8B8]">
+                                    {{ $orderingOpen ? 'Add to Cart' : 'Online Ordering Closed' }}
                                 </button>
                                 <a href="{{ route('menu') }}" class="inline-flex items-center justify-center rounded-full border border-[#FBAB18] bg-[#201D19] px-7 py-4 text-base font-semibold text-[#FBAB18] transition hover:bg-[#201D19]">
                                     Continue Shopping
@@ -157,4 +158,3 @@
         });
     </script>
 @endsection
-

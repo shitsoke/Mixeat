@@ -1,0 +1,1 @@
+<?php /**PATH C:\xampp\htdocs\mixeat\mixeat\resources\views\auth\login.blade.php ENDPATH**/ ?>

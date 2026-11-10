@@ -9,6 +9,18 @@ use Tests\TestCase;
 
 class CartFlowTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Branch::forceCreate([
+            'name' => 'MixEat Commissary',
+            'address' => 'Yap Fraternity Building, Jose L. Briones Street, Cebu City',
+            'opening_hours' => '8:00am - 4:00pm',
+            'distance' => '2 km away',
+        ]);
+    }
+
     public function test_new_visitor_can_build_a_cart_but_must_log_in_to_order(): void
     {
         $this->get('/cart')
@@ -67,6 +79,7 @@ class CartFlowTest extends TestCase
     public function test_placed_order_is_added_to_order_history_and_clears_cart(): void
     {
         $user = User::factory()->create();
+        $defaultBranch = Branch::query()->where('name', 'MixEat Commissary')->firstOrFail();
         $this->setCheckoutCart();
 
         $this->actingAs($user)
@@ -81,6 +94,7 @@ class CartFlowTest extends TestCase
 
         $orderNumber = session('latest_order.id');
         $this->assertMatchesRegularExpression('/^MX-\d{6}$/', $orderNumber);
+        $this->assertSame($defaultBranch->id, Order::where('order_number', $orderNumber)->value('branch_id'));
 
         $this->actingAs($user)
             ->get('/orders')
@@ -120,7 +134,9 @@ class CartFlowTest extends TestCase
             ->get('/checkout')
             ->assertOk()
             ->assertSee('Pickup date and time')
-            ->assertSee('Deliver via Maxim')
+            ->assertDontSee('Deliver via Maxim')
+            ->assertDontSee('Choose a delivery option')
+            ->assertDontSee('Minimum purchase:')
             ->assertSee(asset('images/Gcash.jpeg'));
         $this->assertMatchesRegularExpression('/<input[^>]*id="cash-payment"[^>]*disabled/', $checkoutResponse->getContent());
         $this->assertMatchesRegularExpression('/<input[^>]*id="qr-payment"[^>]*checked/', $checkoutResponse->getContent());
@@ -176,49 +192,42 @@ class CartFlowTest extends TestCase
         $this->assertNull($order->gcash_reference_number);
     }
 
-    public function test_in_house_delivery_requires_a_3000_purchase_but_maxim_is_available(): void
+    public function test_delivery_defaults_to_in_house_without_a_minimum_order(): void
     {
         $this->setCheckoutCart();
+        $deliveryBranch = Branch::query()->where('name', 'MixEat Commissary')->firstOrFail();
         $user = User::factory()->create();
+        $this->actingAs($user)->get('/checkout')
+            ->assertOk()
+            ->assertSee('Default order branch')
+            ->assertSee('MixEat Commissary')
+            ->assertSee('Yap Fraternity Building');
+
         $delivery = [
             'order_type' => 'Delivery',
-            'delivery_method' => 'In-house',
             'delivery_address' => '12 Sample Street, Cebu City',
             'payment_method' => 'Cash',
         ];
 
         $this->actingAs($user)
-            ->from('/checkout')
-            ->post('/orders', $delivery)
-            ->assertRedirect('/checkout')
-            ->assertSessionHasErrors('delivery_method');
-
-        $this->actingAs($user)
             ->post('/orders', array_merge($delivery, ['delivery_method' => 'Maxim']))
             ->assertRedirect('/order-confirmation')
-            ->assertSessionHas('latest_order.delivery_method', 'Maxim')
+            ->assertSessionHas('latest_order.delivery_method', 'In-house')
             ->assertSessionHas('latest_order.type', 'Delivery');
 
         $order = Order::latest('id')->firstOrFail();
+        $this->assertSame($deliveryBranch->id, $order->branch_id);
+        $this->assertSame('In-house', $order->delivery_method);
         $this->assertSame('12 Sample Street, Cebu City', $order->delivery_address);
+        $this->assertSame(0.0, (float) $order->delivery_fee);
+        $this->assertSame(149.0, (float) $order->total);
         $this->assertNull($order->pickup_at);
 
-        $this->setCheckoutCart(21);
-        $this->actingAs($user)
-            ->post('/orders', [
-                'order_type' => 'Delivery',
-                'delivery_method' => 'In-house',
-                'delivery_address' => '12 Sample Street, Cebu City',
-                'payment_method' => 'QR Code',
-            ])
-            ->assertRedirect('/order-confirmation');
-
-        $this->assertSame('In-house', Order::latest('id')->firstOrFail()->delivery_method);
     }
 
     public function test_customer_can_poll_only_their_own_orders_from_the_home_page(): void
     {
-        $branch = Branch::create([
+        $branch = Branch::forceCreate([
             'name' => 'Live Test Branch',
             'address' => '1 Main Street',
             'opening_hours' => '9am-9pm',
@@ -253,13 +262,22 @@ class CartFlowTest extends TestCase
             'type' => 'Pickup',
             'total' => 300,
         ]);
+        Order::create([
+            'order_number' => 'MX-009106',
+            'user_id' => $customer->id,
+            'branch_id' => $branch->id,
+            'status' => 'Declined',
+            'type' => 'Delivery',
+            'total' => 350,
+        ]);
 
         $this->actingAs($customer)
             ->get('/')
             ->assertOk()
             ->assertSee('Track your orders')
             ->assertSee('MX-009101')
-            ->assertDontSee('MX-009103');
+            ->assertDontSee('MX-009103')
+            ->assertDontSee('MX-009106');
 
         $this->actingAs($customer)
             ->getJson('/orders/live')
@@ -267,13 +285,62 @@ class CartFlowTest extends TestCase
             ->assertJsonPath('orders.0.id', 'MX-009101')
             ->assertJsonPath('orders.0.status', 'Preparing')
             ->assertJsonMissing(['id' => 'MX-009102'])
-            ->assertJsonMissing(['id' => 'MX-009103']);
+            ->assertJsonMissing(['id' => 'MX-009103'])
+            ->assertJsonMissing(['id' => 'MX-009106']);
 
         $this->actingAs($customer)
             ->get('/orders')
             ->assertOk()
             ->assertSee('MX-009103')
             ->assertSee('Completed');
+    }
+
+    public function test_customer_order_pages_can_fetch_live_statuses_for_only_their_orders(): void
+    {
+        $branch = Branch::forceCreate([
+            'name' => 'Live Status Branch',
+            'address' => '2 Main Street',
+            'opening_hours' => '9am-9pm',
+            'distance' => '2 km',
+        ]);
+        $customer = User::factory()->create();
+        $anotherCustomer = User::factory()->create();
+        $order = Order::create([
+            'order_number' => 'MX-009104',
+            'user_id' => $customer->id,
+            'branch_id' => $branch->id,
+            'status' => 'Preparing',
+            'type' => 'Pickup',
+            'total' => 450,
+        ]);
+        $anotherOrder = Order::create([
+            'order_number' => 'MX-009105',
+            'user_id' => $anotherCustomer->id,
+            'branch_id' => $branch->id,
+            'status' => 'Pending',
+            'type' => 'Pickup',
+            'total' => 550,
+        ]);
+
+        $this->actingAs($customer)
+            ->getJson('/orders/dashboard/live')
+            ->assertOk()
+            ->assertJsonPath('orders.0.id', $order->order_number)
+            ->assertJsonPath('orders.0.status', 'Preparing')
+            ->assertJsonMissing(['id' => $anotherOrder->order_number]);
+
+        $this->getJson('/orders/9104/status')
+            ->assertOk()
+            ->assertJsonPath('status', 'Preparing');
+
+        $this->getJson('/orders/9105/status')->assertNotFound();
+
+        $this->get('/orders')
+            ->assertOk()
+            ->assertSee(route('orders.dashboard.live'));
+        $this->get('/orders/9104')
+            ->assertOk()
+            ->assertSee(route('orders.status.live', ['id' => 9104]));
     }
 
     private function setCheckoutCart(int $quantity = 1, float $price = 149): void

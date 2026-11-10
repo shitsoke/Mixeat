@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'MixEat | Good Food. Great Moments.')
 
@@ -7,7 +7,7 @@
         <div class="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#FBAB18]/20 blur-3xl"></div>
         <div class="mixeat-shell grid items-center gap-10 px-4 md:grid-cols-2">
             <div>
-                <span class="inline-flex rounded-full border border-[#333333] bg-[#1A1A1A] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#FBAB18]">WE CATER, WE SERVE, WE CELEBRATE.</span>
+                <span class="inline-flex rounded-full border border-[#333333] bg-[#1A1A1A] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#FBAB18]">WE CATER, WE SERVE, WE CARE.</span>
                 <h1 class="mt-6 text-5xl font-black leading-[1.1] text-white md:text-6xl lg:text-6xl">
                     <span class="block">Good Food.</span>
                     <span class="block">Great Moments.</span>
@@ -92,29 +92,7 @@
         </div>
     </section>
 
-    <section class="border-y border-[#333333] bg-[#111111] py-10">
-        <div class="mixeat-shell px-4">
-            <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-                <div>
-                    <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#FBAB18]">Order from your nearest branch</p>
-                    <h2 class="mt-2 text-3xl font-black text-[#FFFFFF]">Choose your branch</h2>
-                </div>
-                <a href="{{ route('branches') }}" class="text-sm font-semibold text-[#FBAB18]">View all branches</a>
-            </div>
-
-            <form action="{{ route('branches.select-dropdown') }}" method="POST" class="flex flex-col gap-4 rounded-[24px] border border-[#333333] bg-[#1A1A1A] p-5 sm:flex-row sm:items-end">
-                @csrf
-                <label class="grid flex-1 gap-2 text-sm font-bold text-[#FFFFFF]" for="home-branch">Your branch
-                    <select id="home-branch" name="branch" class="min-w-0 w-full rounded-full border border-[#333333] bg-[#201D19] px-5 py-3 text-base font-semibold text-[#FFFFFF] focus:border-[#FBAB18] focus:outline-none focus:ring-2 focus:ring-[#FBAB18]/30">
-                        @foreach ($branches as $index => $branch)
-                            <option value="{{ $index }}" @selected($selectedBranch === $index)>{{ $branch['name'] }} - {{ $branch['address'] }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <button type="submit" class="rounded-full bg-[#FBAB18] px-6 py-3 font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18]">Select Branch</button>
-            </form>
-        </div>
-    </section>
+    <section class="py-16 md:py-20">
 
     <section class="py-16 md:py-20">
         <div class="mixeat-shell px-4">
@@ -128,11 +106,12 @@
 
             <div class="mb-10 overflow-x-auto pb-2 md:overflow-visible">
                 <div class="flex min-w-max gap-3 md:flex-wrap md:justify-start">
-                    @foreach($categories as $category)
-                        <a href="{{ route('menu', ['category' => $category]) }}" class="rounded-full border border-[#333333] bg-[#201D19] px-4 py-2 text-sm font-semibold text-white border border-[#333333] transition hover:border-[#FBAB18] hover:bg-[#1A1A1A] hover:text-[#FBAB18] {{ $loop->first ? 'border-[#FBAB18] bg-[#FBAB18] text-[#111111]' : '' }}">
-                            {{ $category }}
-                        </a>
-                    @endforeach
+                    <a href="{{ route('menu') }}" class="rounded-full border border-[#FBAB18] bg-[#FBAB18] px-4 py-2 text-sm font-semibold text-[#111111] transition hover:bg-[#FFC247]">
+                        All
+                    </a>
+                    <a href="{{ route('menu', ['category' => 'Food Bowls']) }}" class="rounded-full border border-[#333333] bg-[#201D19] px-4 py-2 text-sm font-semibold text-white transition hover:border-[#FBAB18] hover:bg-[#1A1A1A] hover:text-[#FBAB18]">
+                        Rice Bowls
+                    </a>
                 </div>
             </div>
 
@@ -155,7 +134,7 @@
 
             let polling = false;
             const refreshOrders = async () => {
-                if (polling || document.hidden) return;
+                if (polling) return;
                 polling = true;
 
                 try {
@@ -212,12 +191,15 @@
             };
 
             refreshOrders();
-            window.setInterval(refreshOrders, 3000);
+            const interval = window.setInterval(refreshOrders, 3000);
+            document.addEventListener('visibilitychange', function(){
+                if (!document.hidden) refreshOrders();
+            });
+            window.addEventListener('beforeunload', function(){ window.clearInterval(interval); });
         })();
     </script>
     @endpush
 @endauth
-
 
 
 

@@ -15,8 +15,11 @@ class EnsureRole
         $isLegacyMarketingAdmin = $user
             && ($user->is_admin || ($user->role === 'marketing_admin'))
             && in_array('marketing', $roles, true);
+        $isLegacyCateringAdmin = $user
+            && $user->is_admin
+            && in_array('marketing_admin', $roles, true);
         $isMarketingAdminByRole = $user && $user->role === 'marketing_admin' && in_array('marketing_admin', $roles, true);
-        if (! $user || (! in_array($user->role, $roles, true) && ! $isLegacyMarketingAdmin && ! $isMarketingAdminByRole)) {
+        if (! $user || (! in_array($user->role, $roles, true) && ! $isLegacyMarketingAdmin && ! $isLegacyCateringAdmin && ! $isMarketingAdminByRole)) {
             abort(403, 'Unauthorized access.');
         }
 

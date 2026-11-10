@@ -1,5 +1,5 @@
 @forelse($orders as $order)
-    <tr>
+    <tr data-order-id="{{ $order->id }}" data-order-status="{{ $order->status }}">
         <td class="py-4 px-4 order-number">{{ $order->order_number }}</td>
         <td class="py-4 px-4 order-type">
             @if ($order->user?->name)
@@ -39,28 +39,34 @@
         </td>
         <td class="py-4 px-4 text-right">
             @if($order->status === 'Pending')
-                <form action="{{ route('admin.supervisors.orders.accept', $order->id) }}" method="POST" class="inline-block me-1">
+                <form action="{{ route('admin.supervisors.orders.accept', $order->id) }}" method="POST" class="inline-block me-1" data-live-order-action data-auto-receipt="true">
                     @csrf
                     @method('PATCH')
                     <button type="submit" class="rounded-full bg-[#28A745] px-4 py-1.5 text-xs font-bold text-white transition hover:bg-[#218838]">Accept</button>
                 </form>
-                <form action="{{ route('admin.supervisors.orders.decline', $order->id) }}" method="POST" class="inline-block">
+                <form action="{{ route('admin.supervisors.orders.decline', $order->id) }}" method="POST" class="inline-block" data-live-order-action>
                     @csrf
                     @method('PATCH')
                     <button type="submit" class="rounded-full border border-[#DC3545] px-4 py-1.5 text-xs font-bold text-[#DC3545] transition hover:bg-red-50">Decline</button>
                 </form>
-            @elseif($order->status === 'Preparing')
-                <form action="{{ route('admin.supervisors.orders.ready', $order->id) }}" method="POST" class="inline-block">
-                    @csrf
-                    @method('PATCH')
-                    <button type="submit" class="rounded-full bg-[#FFC60A] px-4 py-1.5 text-xs font-bold text-[#090909] shadow-sm transition hover:bg-[#E5A900]">Out for Pickup</button>
-                </form>
-            @elseif($order->status === 'Ready for Pickup')
-                <form action="{{ route('admin.supervisors.orders.complete', $order->id) }}" method="POST" class="inline-block">
-                    @csrf
-                    @method('PATCH')
-                    <button type="submit" class="rounded-full border border-[#28A745] px-4 py-1.5 text-xs font-bold text-[#28A745] transition hover:bg-green-50">Complete Order</button>
-                </form>
+            @elseif(in_array($order->status, ['Preparing', 'Ready for Pickup'], true))
+                <a href="{{ route('admin.supervisors.orders.receipt', ['order' => $order->id, 'copy' => 'customer', 'paper' => 80, 'auto' => 1, 'reprint' => 1]) }}" target="_blank" rel="noopener" data-receipt-print class="inline-block rounded-full border border-[#FBAB18] px-3 py-1.5 text-xs font-bold text-[#FBAB18] transition hover:bg-[#FBAB18] hover:text-[#111111]">Print Receipt</a>
+                @if($order->type === 'Delivery')
+                    <a href="{{ route('admin.supervisors.orders.receipt', ['order' => $order->id, 'copy' => 'rider', 'paper' => 80, 'auto' => 1, 'reprint' => 1]) }}" target="_blank" rel="noopener" data-receipt-print class="inline-block rounded-full border border-[#777777] px-3 py-1.5 text-xs font-bold text-[#FFFFFF] transition hover:bg-[#333333]">Rider Copy</a>
+                @endif
+                @if($order->status === 'Preparing')
+                    <form action="{{ route('admin.supervisors.orders.ready', $order->id) }}" method="POST" class="inline-block">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="rounded-full bg-[#FFC60A] px-4 py-1.5 text-xs font-bold text-[#090909] shadow-sm transition hover:bg-[#E5A900]">Out for Pickup</button>
+                    </form>
+                @else
+                    <form action="{{ route('admin.supervisors.orders.complete', $order->id) }}" method="POST" class="inline-block">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="rounded-full border border-[#28A745] px-4 py-1.5 text-xs font-bold text-[#28A745] transition hover:bg-green-50">Complete Order</button>
+                    </form>
+                @endif
             @else
                 <span class="text-xs text-[#777777]">No actions</span>
             @endif
@@ -68,6 +74,6 @@
     </tr>
 @empty
     <tr>
-        <td colspan="5" class="py-6 text-center text-sm font-medium text-[#B8B8B8]">No orders logged for this branch.</td>
+        <td colspan="5" class="py-6 text-center text-sm font-medium text-[#B8B8B8]">No active orders for this branch.</td>
     </tr>
 @endforelse

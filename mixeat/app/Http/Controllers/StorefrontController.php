@@ -3,19 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\CateringMenuItem;
+use App\Models\CateringPackage;
+use App\Models\PackedMealPackage;
+use App\Models\PartyTray;
 use App\Models\Order;
 use App\Models\Promotion;
 use App\Models\Product;
 use App\Models\SiteSetting;
 use App\Services\CateringContent;
+use App\Services\CateringPackageCatalog;
+use App\Services\OrderingHours;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StorefrontController extends Controller
 {
-    private const IN_HOUSE_DELIVERY_MINIMUM = 3000;
-
     private const CASH_PAYMENT_MAXIMUM = 1500;
 
     protected array $categories = [
@@ -57,7 +62,7 @@ class StorefrontController extends Controller
         $trackedOrders = auth()->check()
             ? Order::with('branch')
                 ->where('user_id', auth()->id())
-                ->where('status', '!=', 'Completed')
+                ->whereNotIn('status', ['Completed', 'Declined', 'Cancelled'])
                 ->latest()
                 ->take(10)
                 ->get()
@@ -90,7 +95,7 @@ class StorefrontController extends Controller
     {
         $orders = Order::with('branch')
             ->where('user_id', auth()->id())
-            ->where('status', '!=', 'Completed')
+            ->whereNotIn('status', ['Completed', 'Declined', 'Cancelled'])
             ->latest()
             ->take(10)
             ->get()
@@ -105,6 +110,51 @@ class StorefrontController extends Controller
             ]);
 
         return response()->json(['orders' => $orders]);
+    }
+
+    public function customerOrdersLive()
+    {
+        $orders = Order::with('branch')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->get()
+            ->map(fn (Order $order) => [
+                'id' => $order->order_number,
+                'status' => $order->status,
+                'type' => $order->type,
+                'branch' => $order->branch?->name ?? 'MixEat',
+                'total' => (float) $order->total,
+                'created_at' => $order->created_at?->format('M d, Y • h:i A'),
+                'pickup_at' => $order->pickup_at?->format('M j, Y g:i A'),
+                'delivery_method' => $order->delivery_method,
+                'delivery_address' => $order->delivery_address,
+                'payment_method' => $order->payment_method,
+                'gcash_reference_number' => $order->gcash_reference_number,
+                'url' => route('order-detail', (int) str_replace('MX-', '', $order->order_number)),
+            ]);
+
+        return response()->json(['orders' => $orders])->header('Cache-Control', 'no-store, private');
+    }
+
+    public function liveOrderStatus(string $id)
+    {
+        $orderNumber = 'MX-'.str_pad((int) $id, 6, '0', STR_PAD_LEFT);
+        $order = Order::query()
+            ->where('user_id', auth()->id())
+            ->where('order_number', $orderNumber)
+            ->firstOrFail();
+
+        return response()->json([
+            'id' => $order->order_number,
+            'status' => $order->status,
+        ])->header('Cache-Control', 'no-store, private');
+    }
+
+    public function orderingStatus(OrderingHours $orderingHours)
+    {
+        return response()
+            ->json($orderingHours->status())
+            ->header('Cache-Control', 'no-store, private');
     }
 
     public function menu(Request $request)
@@ -166,12 +216,35 @@ class StorefrontController extends Controller
 
     public function catering()
     {
+        $packages = CateringPackage::active()->get()->mapWithKeys(fn (CateringPackage $package) => [
+            $package->code => [
+                'label' => $package->name,
+                'price' => (float) $package->price,
+                'meat_count' => (int) ($package->included_dishes['meat_count'] ?? 0),
+                'description' => $package->description,
+            ],
+        ])->all();
+        $packedMeals = PackedMealPackage::active()->get()->keyBy('code');
+        $partyTrays = PartyTray::active()->get()->mapWithKeys(fn (PartyTray $tray) => [
+            $tray->name => [
+                'full_price' => (float) $tray->full_price,
+                'half_price' => (float) $tray->half_price,
+                'dishes' => $tray->dishes ?? [],
+            ],
+        ])->all();
+
         return view('storefront.catering', [
             'cateringContent' => app(CateringContent::class)->get(),
-            'partyTrays' => Product::query()
-                ->where('category', 'Food Trays')
+            'cateringPackages' => $packages ?: CateringPackageCatalog::PACKAGES,
+            'packedMealPackages' => $packedMeals,
+            'partyTrayCatalog' => $partyTrays ?: CateringPackageCatalog::PARTY_TRAYS,
+            'cateringMenu' => CateringPackageCatalog::MENU,
+            'customCateringMenu' => CateringMenuItem::query()
+                ->active()
+                ->orderBy('category')
                 ->orderBy('name')
-                ->get(),
+                ->get()
+                ->groupBy('category'),
             'campaignSource' => (string) request()->query('campaign', ''),
         ]);
     }
@@ -253,16 +326,14 @@ class StorefrontController extends Controller
         $items = $this->getCart();
         $subtotal = array_reduce($items, fn ($carry, $item) => $carry + ($item['price'] * $item['quantity']), 0);
         $deliveryFee = 0;
-        $branches = $this->branchOptions();
-        $selectedBranch = $branches[(int) session('selected_branch', 0)] ?? ($branches[0] ?? []);
+        $defaultOrderBranch = $this->getDefaultOrderBranch();
 
         return view('storefront.checkout', [
             'items' => $items,
-            'selectedBranch' => $selectedBranch,
+            'defaultOrderBranch' => $defaultOrderBranch,
             'subtotal' => $subtotal,
             'deliveryFee' => $deliveryFee,
             'total' => $subtotal + $deliveryFee,
-            'inHouseDeliveryMinimum' => self::IN_HOUSE_DELIVERY_MINIMUM,
             'cashPaymentMaximum' => self::CASH_PAYMENT_MAXIMUM,
         ]);
     }
@@ -276,19 +347,10 @@ class StorefrontController extends Controller
         $validated = $request->validate([
             'order_type' => ['required', 'in:Pickup,Delivery'],
             'pickup_at' => ['required_if:order_type,Pickup', 'nullable', 'date', 'after_or_equal:now'],
-            'delivery_method' => ['required_if:order_type,Delivery', 'nullable', 'in:In-house,Maxim'],
             'delivery_address' => ['required_if:order_type,Delivery', 'nullable', 'string', 'max:1000'],
             'payment_method' => ['required', 'in:Cash,QR Code'],
             'gcash_reference_number' => ['required_if:payment_method,QR Code', 'nullable', 'string', 'max:100'],
         ]);
-
-        if ($validated['order_type'] === 'Delivery'
-            && $validated['delivery_method'] === 'In-house'
-            && $subtotal < self::IN_HOUSE_DELIVERY_MINIMUM) {
-            return back()
-                ->withInput()
-                ->withErrors(['delivery_method' => 'In-house delivery requires a minimum purchase of ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±'.number_format(self::IN_HOUSE_DELIVERY_MINIMUM, 2).'.']);
-        }
 
         if ($subtotal > self::CASH_PAYMENT_MAXIMUM && $validated['payment_method'] !== 'QR Code') {
             return back()
@@ -296,9 +358,10 @@ class StorefrontController extends Controller
                 ->withErrors(['payment_method' => 'Orders above ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±'.number_format(self::CASH_PAYMENT_MAXIMUM, 2).' must be paid using QR Code.']);
         }
 
-        $branchId = $this->getActiveBranchId();
+        $branchId = $this->getDefaultOrderBranch()->id;
 
         $order = DB::transaction(function () use ($items, $validated, $subtotal, $branchId) {
+            $deliveryFee = 0;
             $maxOrder = Order::lockForUpdate()->select('order_number')->orderByRaw('CAST(SUBSTRING(order_number, 4) AS UNSIGNED) DESC')->first();
             $nextNumber = $maxOrder && $maxOrder->order_number ? ((int) substr($maxOrder->order_number, 3)) + 1 : 1;
             $orderNumber = 'MX-'.str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
@@ -309,9 +372,10 @@ class StorefrontController extends Controller
                 'branch_id' => $branchId,
                 'status' => 'Pending',
                 'type' => $validated['order_type'],
-                'total' => $subtotal,
+                'total' => $subtotal + $deliveryFee,
+                'delivery_fee' => $deliveryFee,
                 'pickup_at' => $validated['order_type'] === 'Pickup' ? $validated['pickup_at'] : null,
-                'delivery_method' => $validated['order_type'] === 'Delivery' ? $validated['delivery_method'] : null,
+                'delivery_method' => $validated['order_type'] === 'Delivery' ? 'In-house' : null,
                 'delivery_address' => $validated['order_type'] === 'Delivery' ? $validated['delivery_address'] : null,
                 'payment_method' => $validated['payment_method'],
                 'gcash_reference_number' => $validated['payment_method'] === 'QR Code' ? trim($validated['gcash_reference_number']) : null,
@@ -328,6 +392,40 @@ class StorefrontController extends Controller
 
             return $order;
         });
+
+        if (app()->isLocal()) {
+            Log::debug('Customer order committed for supervisor live updates.', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'branch_id' => $order->branch_id,
+                'status' => $order->status,
+            ]);
+        }
+
+        // Notify branch supervisors after order is committed
+        try {
+            $order->loadMissing('branch', 'user');
+            $branch = $order->branch;
+            if ($branch && $branch->id) {
+                $supervisors = \App\Models\User::where('role', 'supervisor')
+                    ->where('branch_id', $branch->id)
+                    ->get();
+                foreach ($supervisors as $supervisor) {
+                    $existing = $supervisor->notifications()
+                        ->where('type', \App\Notifications\NewOrderNotification::class)
+                        ->where('data->order_id', $order->id)
+                        ->exists();
+                    if (!$existing) {
+                        $supervisor->notify(new \App\Notifications\NewOrderNotification($order));
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify branch supervisors about a new order.', [
+                'order_id' => $order->id,
+                'exception' => $e,
+            ]);
+        }
 
         session()->put('latest_order', [
             'id' => $order->order_number,
@@ -550,10 +648,18 @@ class StorefrontController extends Controller
 
     protected function getActiveBranchId(): int
     {
-        $branches = $this->branchOptions();
-        $selectedIndex = (int) session('selected_branch', 0);
+        return (int) $this->getDefaultOrderBranch()->id;
+    }
 
-        return $branches[$selectedIndex]['id'] ?? ($branches[0]['id'] ?? 1);
+    protected function getDefaultOrderBranch(): Branch
+    {
+        return Branch::query()
+            ->where(function ($query) {
+                $query->where('name', 'like', '%MixEat Commissary%')
+                    ->orWhere('address', 'like', '%Yap Fraternity%');
+            })
+            ->orderByRaw('CASE WHEN name LIKE \'%MixEat Commissary%\' THEN 0 ELSE 1 END')
+            ->firstOrFail();
     }
 
     protected function promotionSettings(): array
@@ -595,7 +701,7 @@ class StorefrontController extends Controller
                 'category' => $product->category,
                 'subcategory' => $product->subcategory,
                 'description' => $product->description,
-                'price' => (float) $product->price,
+                'price' => (float) ($branchPivot?->price ?? $product->price),
                 'image' => method_exists($product, 'imageUrl') ? $product->imageUrl() : asset('storage/'.$product->image),
                 'badge' => $product->badge,
                 'is_best_seller' => (bool) $product->is_best_seller,
@@ -603,10 +709,3 @@ class StorefrontController extends Controller
         })->all();
     }
 }
-
-
-
-
-
-
-

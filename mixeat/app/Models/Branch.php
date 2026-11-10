@@ -11,8 +11,7 @@ class Branch extends Model
 
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class)->withPivot('available')->withTimestamps();
+        return $this->belongsToMany(Product::class)->withPivot('available', 'price')->withTimestamps();
     }
 }
-
 

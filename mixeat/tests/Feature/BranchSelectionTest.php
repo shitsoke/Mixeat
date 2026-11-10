@@ -2,12 +2,25 @@
 
 namespace Tests\Feature;
 
+use App\Models\Branch;
 use App\Models\User;
 use Tests\TestCase;
 
 class BranchSelectionTest extends TestCase
 {
-    public function test_customer_can_select_a_branch_for_checkout(): void
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Branch::forceCreate([
+            'name' => 'MixEat Commissary',
+            'address' => 'Yap Fraternity Building, Jose L. Briones Street, Cebu City',
+            'opening_hours' => '8:00am - 4:00pm',
+            'distance' => '2 km away',
+        ]);
+    }
+
+    public function test_customer_selection_does_not_override_the_default_order_branch(): void
     {
         $user = User::factory()->create();
 
@@ -19,8 +32,9 @@ class BranchSelectionTest extends TestCase
         $this->actingAs($user)
             ->get('/checkout')
             ->assertOk()
-            ->assertSee('MixEat Talamban')
-            ->assertSee('Talamban, Cebu City');
+            ->assertSee('Default order branch')
+            ->assertSee('MixEat Commissary')
+            ->assertSee('Yap Fraternity Building');
     }
 
     public function test_customer_can_select_a_branch_from_home_dropdown(): void

@@ -3,6 +3,8 @@
     'compact' => false,
 ])
 
+@php($orderingOpen = app(\App\Services\OrderingHours::class)->isOpen())
+
 <div class="product-card group flex h-full min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#333333] bg-[#201D19] shadow-[0_14px_40px_rgba(229,169,0,0.12)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(229,169,0,0.16)]">
     <div class="product-image-frame relative overflow-hidden">
         <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" onerror="this.onerror=null; this.src='{{ asset('images/mixeat.jpg') }}';" class="object-cover transition duration-300 group-hover:scale-105">
@@ -37,10 +39,10 @@
                     View Details
                 </a>
                 @if ($product['available'] ?? true)
-                    <form action="{{ route('cart.add', ['id' => $product['id']]) }}" method="POST">
+                    <form action="{{ route('cart.add', ['id' => $product['id']]) }}" method="POST" data-ordering-action="add-to-cart">
                         @csrf
-                        <button type="submit" class="rounded-full bg-[#FBAB18] px-4 py-2.5 text-sm font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18]">
-                            Add to Cart
+                        <button type="submit" data-ordering-open-label="Add to Cart" @disabled(!$orderingOpen) class="rounded-full bg-[#FBAB18] px-4 py-2.5 text-sm font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18] disabled:cursor-not-allowed disabled:bg-[#333333] disabled:text-[#B8B8B8]">
+                            {{ $orderingOpen ? 'Add to Cart' : 'Online Ordering Closed' }}
                         </button>
                     </form>
                 @else
@@ -52,7 +54,6 @@
         </div>
     </div>
 </div>
-
 
 
 

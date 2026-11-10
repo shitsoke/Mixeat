@@ -44,7 +44,7 @@ class AuthController extends Controller
             if ($user->role === 'marketing_admin') {
                 $request->session()->regenerate();
 
-                return redirect()->route('admin.marketing.catering-bookings');
+                return redirect()->route('admin.products.index');
             }
 
             if ($user->isMarketing()) {
@@ -183,7 +183,7 @@ class AuthController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:20'],
             'password' => ['required', 'confirmed', 'min:8'],
         ]);
 
@@ -232,6 +232,16 @@ class AuthController extends Controller
     public function updateProfile(Request $request)
     {
         $user = $request->user();
+
+        $googleAccount = $user->socialAccounts()
+            ->where('provider', 'google')
+            ->exists();
+
+        if ($googleAccount && $request->input('email') !== $user->email) {
+            return redirect()->route('profile.edit')
+                ->withErrors(['email' => 'The email address for a Google account cannot be changed.'])
+                ->withInput();
+        }
 
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],

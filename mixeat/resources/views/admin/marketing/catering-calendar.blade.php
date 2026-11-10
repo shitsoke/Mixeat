@@ -1,6 +1,8 @@
 @extends('layouts.admin')
 
 @section('content')
+@include('admin.marketing.partials.catering-admin-theme')
+<div class="catering-admin-theme">
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
     <div>
         <p class="small fw-bold text-uppercase text-warning-emphasis mb-1">Marketing Admin</p>
@@ -25,7 +27,16 @@
                         <div class="col-lg-4">
                             <h3 class="h6 fw-bold mb-1">{{ $booking->client_name }} <span class="badge text-bg-light border">{{ $booking->status }}</span></h3>
                             <div>{{ $booking->service_type }} &middot; {{ number_format($booking->guest_count) }} guests</div>
+                            <div class="small text-secondary">{{ $booking->event_type ?: 'Event type not provided' }}{{ $booking->event_type_details ? ': '.$booking->event_type_details : '' }}</div>
                             <div class="small text-secondary">{{ $booking->package_preference ?: 'No package preference' }}</div>
+                            @if ($booking->trayItems->isNotEmpty())
+                                <div class="small mt-1">
+                                    @foreach ($booking->trayItems as $trayItem)
+                                        <div>{{ $trayItem->category }} · {{ $trayItem->dish }} · {{ ucfirst($trayItem->tray_size) }} × {{ number_format($trayItem->quantity) }} · ₱{{ number_format((float) $trayItem->subtotal, 2) }}</div>
+                                    @endforeach
+                                    <strong>Tray estimate: ₱{{ number_format((float) $booking->estimated_total, 2) }}</strong>
+                                </div>
+                            @endif
                             @if ($booking->venue)
                                 <div class="small text-secondary mt-1">{{ $booking->venue }}</div>
                             @endif
@@ -41,6 +52,7 @@
                             <form action="{{ route('admin.marketing.catering-calendar.update', $booking) }}" method="POST" class="row g-2 align-items-end">
                                 @csrf
                                 @method('PATCH')
+                                @if ($booking->payments->isEmpty())
                                 <div class="col-sm-6 col-lg-4">
                                     <label for="booking-status-{{ $booking->id }}" class="form-label small fw-semibold">Booking decision / status</label>
                                     <select id="booking-status-{{ $booking->id }}" class="form-select form-select-sm" name="status" required>
@@ -53,6 +65,20 @@
                                         @foreach (['Unpaid', 'Deposit Paid', 'Fully Paid'] as $payment)<option value="{{ $payment }}" @selected($booking->payment_status === $payment)>{{ $payment }}</option>@endforeach
                                     </select>
                                 </div>
+                                @else
+                                <div class="col-sm-6 col-lg-8">
+                                    @if ($booking->payments->where('payment_type', 'deposit')->where('status', 'Verified')->isNotEmpty())
+                                        <label for="booking-status-{{ $booking->id }}" class="form-label small fw-semibold">Fulfillment status</label>
+                                        <select id="booking-status-{{ $booking->id }}" class="form-select form-select-sm" name="status" required>
+                                            @foreach (['Confirmed', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'] as $status)<option value="{{ $status }}" @selected($booking->status === $status)>{{ $status }}</option>@endforeach
+                                        </select>
+                                    @else
+                                        <span class="form-label small fw-semibold d-block">Booking / payment status</span>
+                                        <div class="small">{{ $booking->status }} · {{ $booking->payment_status }}</div>
+                                        <p class="small text-secondary mb-0">Deposit verification and payment collection are managed from the booking details.</p>
+                                    @endif
+                                </div>
+                                @endif
                                 <div class="col-sm-6 col-lg-4">
                                     <label for="booking-quote-{{ $booking->id }}" class="form-label small fw-semibold">Quote (PHP)</label>
                                     <input id="booking-quote-{{ $booking->id }}" class="form-control form-control-sm" type="number" name="quote_amount" min="0" step="0.01" value="{{ $booking->quote_amount }}">
@@ -101,4 +127,5 @@
 @empty
     <div class="card-custom p-5 text-center text-secondary">No catering events are scheduled yet.</div>
 @endforelse
+</div>
 @endsection

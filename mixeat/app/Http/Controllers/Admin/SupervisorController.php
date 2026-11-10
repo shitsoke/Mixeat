@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use App\Notifications\OrderStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -25,9 +26,13 @@ class SupervisorController extends Controller
             $query->where('branches.id', $branch->id);
         }])->orderBy('name')->get();
 
-        // Fetch orders for this branch
+        // Keep active orders visible until they are completed or declined.
         $orders = Order::where('branch_id', $branch->id)
-            ->latest()
+            ->whereNotIn('status', ['Completed', 'Declined'])
+            ->with('user')
+            ->orderByRaw("CASE WHEN status = 'Pending' THEN 0 ELSE 1 END")
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->get();
 
         // Calculate Daily Summary Metrics using direct SQL date filtering (Asia/Manila)
@@ -40,7 +45,8 @@ class SupervisorController extends Controller
             'ready_count'     => (clone $todayQuery)->where('status', 'Ready for Pickup')->count(),
             'completed_count' => (clone $todayQuery)->where('status', 'Completed')->count(),
             'declined_count'  => (clone $todayQuery)->where('status', 'Declined')->count(),
-            'total_revenue'   => (clone $todayQuery)->whereIn('status', ['Preparing', 'Ready for Pickup', 'Completed'])->sum('total'),
+            'pending_count' => Order::where('branch_id', $branch->id)->where('status', 'Pending')->count(),
+            'total_revenue' => (clone $todayQuery)->whereIn('status', ['Preparing', 'Ready for Pickup', 'Completed'])->sum('total'),
         ];
 
         return view('admin.supervisors.index', compact('branch', 'products', 'orders', 'dailySummary'));
@@ -52,7 +58,20 @@ class SupervisorController extends Controller
         abort_unless($user && $user->isSupervisor() && $user->branch_id, 403, 'Unauthorized access or no branch assigned.');
 
         $branch = $user->branch;
-        $orders = Order::where('branch_id', $branch->id)->latest()->get();
+        $orders = Order::where('branch_id', $branch->id)
+            ->whereNotIn('status', ['Completed', 'Declined'])
+            ->with(['user', 'items'])
+            ->orderByRaw("CASE WHEN status = 'Pending' THEN 0 ELSE 1 END")
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+        $pendingOrders = $orders
+            ->where('status', 'Pending')
+            ->map(fn (Order $order) => [
+                'id' => (string) $order->id,
+                'number' => $order->order_number,
+            ])
+            ->values();
         $todayQuery = Order::where('branch_id', $branch->id)
             ->whereDate('created_at', Carbon::today('Asia/Manila'));
 
@@ -60,13 +79,20 @@ class SupervisorController extends Controller
             'total_orders' => (clone $todayQuery)->count(),
             'preparing_count' => (clone $todayQuery)->where('status', 'Preparing')->count(),
             'ready_count' => (clone $todayQuery)->where('status', 'Ready for Pickup')->count(),
+            'completed_count' => (clone $todayQuery)->where('status', 'Completed')->count(),
+            'declined_count' => (clone $todayQuery)->where('status', 'Declined')->count(),
+            'pending_count' => $pendingOrders->count(),
             'total_revenue' => (clone $todayQuery)->whereIn('status', ['Preparing', 'Ready for Pickup', 'Completed'])->sum('total'),
         ];
 
         return response()->json([
+            'order_count' => $orders->count(),
             'orders_html' => view('admin.supervisors.partials.order-rows', compact('orders'))->render(),
+            'pending_orders' => $pendingOrders,
             'daily_summary' => $dailySummary,
-        ]);
+            'notification_state' => $this->unreadNotificationState($user),
+            'branch_id' => $branch->id,
+        ])->header('Cache-Control', 'no-store, private');
     }
 
     public function exportDailySales(Request $request): StreamedResponse
@@ -164,20 +190,69 @@ class SupervisorController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    public function acceptOrder(Order $order)
+    public function acceptOrder(Request $request, Order $order)
     {
-        $user = auth()->user();
-        abort_unless($user && $user->isSupervisor() && $user->branch_id === $order->branch_id, 403);
+        $user = $request->user();
+        abort_unless($user && $user->isSupervisor() && (int) $user->branch_id === (int) $order->branch_id, 403);
 
-        $order->update(['status' => 'Preparing']);
+        $updated = Order::whereKey($order->id)
+            ->where('branch_id', $user->branch_id)
+            ->where('status', 'Pending')
+            ->update(['status' => 'Preparing']);
+
+        if (!$updated) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'This order is no longer pending.'], 409);
+            }
+
+            return back()->with('admin_status', "Order {$order->order_number} is no longer pending.");
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => 'Preparing',
+                'receipt_url' => route('admin.supervisors.orders.receipt', [
+                    'order' => $order->id,
+                    'copy' => 'customer',
+                ]),
+            ]);
+        }
 
         return back()->with('admin_status', "Order {$order->order_number} accepted and set to Preparing.");
     }
 
-        public function markReadyForPickup(Order $order)
+    public function receipt(Request $request, Order $order, string $copy)
+    {
+        $user = $request->user();
+        abort_unless($user && $user->isSupervisor() && (int) $user->branch_id === (int) $order->branch_id, 403);
+        abort_unless(in_array($copy, ['customer', 'rider'], true), 404);
+        abort_unless(in_array($order->status, ['Preparing', 'Ready for Pickup', 'Completed'], true), 404);
+        abort_unless($copy !== 'rider' || $order->type === 'Delivery', 404);
+
+        $validated = $request->validate([
+            'paper' => ['sometimes', 'in:58,80'],
+            'auto' => ['sometimes', 'boolean'],
+            'reprint' => ['sometimes', 'boolean'],
+        ]);
+
+        $order->load(['user', 'branch', 'items']);
+
+        return response()
+            ->view('admin.supervisors.receipt', [
+                'order' => $order,
+                'copyType' => $copy,
+                'paperWidth' => (int) ($validated['paper'] ?? 80),
+                'autoPrint' => (bool) ($validated['auto'] ?? false),
+                'isReprint' => (bool) ($validated['reprint'] ?? false),
+            ])
+            ->header('Cache-Control', 'no-store, private');
+    }
+
+    public function markReadyForPickup(Order $order)
     {
         $user = auth()->user();
-        abort_unless($user && $user->isSupervisor() && $user->branch_id === $order->branch_id, 403);
+        abort_unless($user && $user->isSupervisor() && (int) $user->branch_id === (int) $order->branch_id, 403);
 
         $previousStatus = $order->status;
         $order->update(['status' => 'Ready for Pickup']);
@@ -189,10 +264,10 @@ class SupervisorController extends Controller
         return back()->with('admin_status', "Order {$order->order_number} marked as Ready for Pickup.");
     }
 
-        public function markCompleted(Order $order)
+    public function markCompleted(Order $order)
     {
         $user = auth()->user();
-        abort_unless($user && $user->isSupervisor() && $user->branch_id === $order->branch_id, 403);
+        abort_unless($user && $user->isSupervisor() && (int) $user->branch_id === (int) $order->branch_id, 403);
 
         $previousStatus = $order->status;
         $order->update(['status' => 'Completed']);
@@ -204,12 +279,27 @@ class SupervisorController extends Controller
         return back()->with('admin_status', "Order {$order->order_number} marked as Completed.");
     }
 
-    public function declineOrder(Order $order)
+    public function declineOrder(Request $request, Order $order)
     {
-        $user = auth()->user();
-        abort_unless($user && $user->isSupervisor() && $user->branch_id === $order->branch_id, 403);
+        $user = $request->user();
+        abort_unless($user && $user->isSupervisor() && (int) $user->branch_id === (int) $order->branch_id, 403);
 
-        $order->update(['status' => 'Declined']);
+        $updated = Order::whereKey($order->id)
+            ->where('branch_id', $user->branch_id)
+            ->where('status', 'Pending')
+            ->update(['status' => 'Declined']);
+
+        if (!$updated) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'This order is no longer pending.'], 409);
+            }
+
+            return back()->with('admin_status', "Order {$order->order_number} is no longer pending.");
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'status' => 'Declined']);
+        }
 
         return back()->with('admin_status', "Order {$order->order_number} has been declined.");
     }
@@ -235,6 +325,15 @@ class SupervisorController extends Controller
         $user = $request->user();
         abort_unless($user && $user->isSupervisor() && $user->branch_id, 403);
 
+        if (! $request->expectsJson()) {
+            return redirect()->route('admin.supervisors.index');
+        }
+
+        return response()->json($this->unreadNotificationState($user));
+    }
+
+    private function unreadNotificationState(User $user): array
+    {
         $notifications = $user->unreadNotifications()
             ->latest()
             ->limit(20)
@@ -248,10 +347,10 @@ class SupervisorController extends Controller
                 ];
             });
 
-        return response()->json([
+        return [
             'count' => $user->unreadNotifications()->count(),
             'notifications' => $notifications,
-        ]);
+        ];
     }
 
     public function markNotificationRead(Request $request, $id)
@@ -261,6 +360,16 @@ class SupervisorController extends Controller
 
         $notification = $user->notifications()->findOrFail($id);
         $notification->markAsRead();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function markAllNotificationsRead(Request $request)
+    {
+        $user = $request->user();
+        abort_unless($user && $user->isSupervisor() && $user->branch_id, 403);
+
+        $user->unreadNotifications()->update(['read_at' => now()]);
 
         return response()->json(['success' => true]);
     }
@@ -278,9 +387,13 @@ class SupervisorController extends Controller
             abort(404);
         }
 
-        $order = Order::with('items.product', 'user')->findOrFail($orderId);
-        abort_unless($order->branch_id === $user->branch_id, 403);
+        $order = Order::with('items', 'user')->findOrFail($orderId);
+        abort_unless((int) $order->branch_id === (int) $user->branch_id, 403);
 
-        return redirect()->route('supervisors.index')->with('admin_status', "Viewing order {$order->order_number}");
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'order_id' => $order->id]);
+        }
+
+        return redirect()->route('admin.supervisors.index')->with('admin_status', "Viewing order {$order->order_number}");
     }
 }

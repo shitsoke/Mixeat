@@ -86,6 +86,102 @@ class AdminController extends Controller
         return back()->with('admin_status', $product->name.' is now '.($available ? 'available' : 'sold out').' at '.$branch->name.'.');
     }
 
+    public function commissaryIndex()
+    {
+        $branch = $this->ensureCommissarySupervisor();
+
+        return view('admin.products.index', [
+            'products' => Product::whereHas('branches', fn ($query) => $query->whereKey($branch->id))
+                ->with(['branches' => fn ($query) => $query->whereKey($branch->id)])
+                ->latest()
+                ->get(),
+            'branches' => collect([$branch]),
+            'manageRoute' => 'admin.supervisors.foods',
+            'branchScoped' => true,
+        ]);
+    }
+
+    public function commissaryCreate()
+    {
+        $branch = $this->ensureCommissarySupervisor();
+
+        return view('admin.products.form', [
+            'product' => new Product(),
+            'branches' => collect([$branch]),
+            'categories' => self::CATEGORIES,
+            'manageRoute' => 'admin.supervisors.foods',
+            'branchScoped' => true,
+        ]);
+    }
+
+    public function commissaryStore(Request $request)
+    {
+        $branch = $this->ensureCommissarySupervisor();
+        $data = $this->validatedProduct($request);
+        $product = Product::create($data);
+        $product->branches()->syncWithoutDetaching([
+            $branch->id => ['available' => true, 'price' => $data['price']],
+        ]);
+
+        return redirect()->route('admin.supervisors.foods.index')->with('admin_status', 'Food added successfully for MixEat Commissary.');
+    }
+
+    public function commissaryEdit(Product $product)
+    {
+        $branch = $this->ensureCommissarySupervisor();
+        abort_unless($product->branches()->whereKey($branch->id)->exists(), 404);
+
+        return view('admin.products.form', [
+            'product' => $product->load(['branches' => fn ($query) => $query->whereKey($branch->id)]),
+            'branches' => collect([$branch]),
+            'categories' => self::CATEGORIES,
+            'manageRoute' => 'admin.supervisors.foods',
+            'branchScoped' => true,
+        ]);
+    }
+
+    public function commissaryUpdate(Request $request, Product $product)
+    {
+        $branch = $this->ensureCommissarySupervisor();
+        abort_unless($product->branches()->whereKey($branch->id)->exists(), 404);
+        $data = $this->validatedProduct($request);
+        $price = $data['price'];
+        unset($data['price']);
+        $product->update($data);
+        $product->branches()->updateExistingPivot($branch->id, [
+            'price' => $price,
+        ]);
+
+        return redirect()->route('admin.supervisors.foods.index')->with('admin_status', 'Food updated successfully for MixEat Commissary.');
+    }
+
+    public function commissaryDestroy(Product $product)
+    {
+        $branch = $this->ensureCommissarySupervisor();
+        abort_unless($product->branches()->whereKey($branch->id)->exists(), 404);
+
+        $otherBranches = $product->branches()->where('branches.id', '!=', $branch->id)->exists();
+        if ($otherBranches) {
+            $product->branches()->detach($branch->id);
+
+            return back()->with('admin_status', 'Shared food was archived from MixEat Commissary without affecting other branches.');
+        }
+
+        $product->delete();
+
+        return back()->with('admin_status', 'Food deleted successfully.');
+    }
+
+    public function commissaryToggleAvailability(Request $request, Product $product)
+    {
+        $branch = $this->ensureCommissarySupervisor();
+        abort_unless($product->branches()->whereKey($branch->id)->exists(), 404);
+        $available = $request->boolean('available');
+        $product->branches()->updateExistingPivot($branch->id, ['available' => $available]);
+
+        return back()->with('admin_status', $product->name.' is now '.($available ? 'available' : 'sold out').' at MixEat Commissary.');
+    }
+
     public function branches()
     {
         $this->ensureAdmin();
@@ -314,8 +410,19 @@ class AdminController extends Controller
     {
         abort_unless(auth()->check() && auth()->user()->is_admin, 403);
     }
+
+    private function ensureCommissarySupervisor(): Branch
+    {
+        $user = auth()->user();
+        abort_unless($user && $user->isSupervisor() && ($user->is_active ?? true) && $user->branch_id, 403);
+
+        $branch = Branch::query()
+            ->whereKey($user->branch_id)
+            ->where('name', 'MixEat Commissary')
+            ->first();
+
+        abort_unless($branch, 403, 'Only the MixEat Commissary supervisor can manage foods.');
+
+        return $branch;
+    }
 }
-
-
-
-

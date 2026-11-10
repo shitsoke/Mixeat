@@ -16,6 +16,7 @@ class Order extends Model
         'status',
         'type',
         'total',
+        'delivery_fee',
         'pickup_at',
         'delivery_method',
         'delivery_address',
@@ -25,6 +26,8 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'total' => 'decimal:2',
+        'delivery_fee' => 'decimal:2',
         'pickup_at' => 'datetime',
     ];
 

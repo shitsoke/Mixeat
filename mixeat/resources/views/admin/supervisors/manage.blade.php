@@ -12,7 +12,7 @@
                 <h1 class="mt-1 text-3xl font-black text-[#FFFFFF]">Assign Branch Supervisor</h1>
                 <p class="mt-1 text-sm font-medium text-[#B8B8B8]">Enter an email address to assign a user as a supervisor for a specific branch.</p>
             </div>
-            <a href="{{ route('admin.products.index') }}" class="inline-flex rounded-full border border-[#FBAB18] px-5 py-2.5 text-xs font-bold text-[#FBAB18] transition hover:bg-[#201D19]">
+            <a href="{{ route('home') }}" class="inline-flex rounded-full border border-[#FBAB18] px-5 py-2.5 text-xs font-bold text-[#FBAB18] transition hover:bg-[#201D19]">
                 Back to Dashboard
             </a>
         </div>

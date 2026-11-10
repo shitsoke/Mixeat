@@ -3,6 +3,7 @@
 @section('title', 'Your Cart | MixEat')
 
 @section('content')
+    @php($orderingOpen = app(\App\Services\OrderingHours::class)->isOpen())
     <section class="py-14">
         <div class="mixeat-shell px-4">
             <div class="mb-8 text-center md:text-left">
@@ -106,8 +107,15 @@
                             <a href="{{ route('menu') }}" class="inline-flex w-full items-center justify-center rounded-full border border-[#FBAB18] bg-[#201D19] px-6 py-3.5 text-base font-semibold text-[#FBAB18] transition hover:bg-[#201D19]">
                                 Continue Shopping
                             </a>
-                            <a href="{{ route('checkout') }}" class="inline-flex w-full items-center justify-center rounded-full bg-[#FBAB18] px-6 py-3.5 text-base font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18]">
-                                Proceed to Checkout
+                            <a
+                                @if($orderingOpen) href="{{ route('checkout') }}" @endif
+                                data-ordering-action="checkout-link"
+                                data-ordering-open-href="{{ route('checkout') }}"
+                                data-ordering-open-label="Proceed to Checkout"
+                                @if(!$orderingOpen) aria-disabled="true" tabindex="-1" @endif
+                                class="inline-flex w-full items-center justify-center rounded-full bg-[#FBAB18] px-6 py-3.5 text-base font-semibold text-[#FFFFFF] shadow-lg shadow-[#FBAB18]/25 transition hover:bg-[#FBAB18] disabled:cursor-not-allowed disabled:bg-[#333333] disabled:text-[#B8B8B8] {{ $orderingOpen ? '' : 'pointer-events-none cursor-not-allowed bg-[#333333] text-[#B8B8B8]' }}"
+                            >
+                                {{ $orderingOpen ? 'Proceed to Checkout' : 'Online Ordering Closed' }}
                             </a>
                         </div>
                     </aside>

@@ -48,12 +48,6 @@
         </a>
     </div>
     <div class="col-md-6 col-xl-3">
-        <a class="card-custom d-block h-100 p-4 text-decoration-none text-dark" href="{{ route('admin.catering.content') }}">
-            <h2 class="h5 fw-bold">Catering Content</h2>
-            <p class="mb-0 text-secondary">Update package descriptions, seasonal banners, and promotional highlights.</p>
-        </a>
-    </div>
-    <div class="col-md-6 col-xl-3">
         <a class="card-custom d-block h-100 p-4 text-decoration-none text-dark" href="{{ route('admin.marketing.catering-partners') }}">
             <h2 class="h5 fw-bold">Clients &amp; Partners</h2>
             <p class="mb-0 text-secondary">Manage partner logos and their visibility on the Catering page.</p>

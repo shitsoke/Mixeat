@@ -49,7 +49,10 @@
                     </div>
                     <div class="md:col-span-2">
                         <label class="mb-2 block text-sm font-semibold text-[#B8B8B8]">Email</label>
-                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="w-full rounded-2xl border border-[#383838] bg-[#191919] px-4 py-3 text-sm text-[#FFFFFF] focus:outline-none" />
+                        <input type="email" name="email" value="{{ old('email', $user->email) }}" @if ($user->socialAccounts()->where('provider', 'google')->exists()) readonly @endif required class="w-full rounded-2xl border border-[#383838] bg-[#191919] px-4 py-3 text-sm text-[#FFFFFF] focus:outline-none @if ($user->socialAccounts()->where('provider', 'google')->exists()) cursor-not-allowed opacity-70 @endif" />
+                        @if ($user->socialAccounts()->where('provider', 'google')->exists())
+                            <p class="mt-1 text-xs text-[#999999]">Google account email addresses cannot be changed.</p>
+                        @endif
                     </div>
                     <div class="md:col-span-2">
                         <label class="mb-2 block text-sm font-semibold text-[#B8B8B8]">Phone Number</label>
@@ -64,4 +67,3 @@
         </div>
     </section>
 @endsection
-

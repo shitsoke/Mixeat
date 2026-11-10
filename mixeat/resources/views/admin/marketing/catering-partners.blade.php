@@ -1,6 +1,133 @@
 @extends('layouts.admin')
 
 @section('content')
+<style>
+    body:has(.catering-partners-page) {
+        background: #111111;
+        color: #FFFFFF;
+    }
+
+    body:has(.catering-partners-page) .admin-navbar {
+        background: #1A1A1A !important;
+        border-color: #333333 !important;
+    }
+
+    body:has(.catering-partners-page) .admin-navbar .brand-name,
+    body:has(.catering-partners-page) .admin-navbar .nav-link,
+    body:has(.catering-partners-page) .admin-navbar .admin-account {
+        color: #FFFFFF !important;
+    }
+
+    body:has(.catering-partners-page) .admin-navbar .nav-link:hover,
+    body:has(.catering-partners-page) .admin-navbar .nav-link:focus {
+        color: #FBAB18 !important;
+    }
+
+    body:has(.catering-partners-page) .admin-navbar .navbar-toggler {
+        border-color: #555555;
+    }
+
+    body:has(.catering-partners-page) .admin-navbar .navbar-toggler-icon {
+        filter: invert(1);
+    }
+
+    .catering-partners-page {
+        color: #FFFFFF;
+    }
+
+    .catering-partners-page .text-secondary {
+        color: #B8B8B8 !important;
+    }
+
+    .catering-partners-page .card-custom {
+        border-color: #333333;
+        background: #201D19;
+        box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+        color: #FFFFFF;
+    }
+
+    .catering-partners-page h1,
+    .catering-partners-page h2 {
+        color: #FFFFFF;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .catering-partners-page .form-control {
+        border-color: #444444;
+        background-color: #1A1A1A;
+        color: #FFFFFF;
+    }
+
+    .catering-partners-page .form-control::placeholder {
+        color: #888888;
+    }
+
+    .catering-partners-page .form-control:focus {
+        border-color: #FBAB18;
+        background-color: #1A1A1A;
+        color: #FFFFFF;
+        box-shadow: 0 0 0 0.2rem rgb(251 171 24 / 20%);
+    }
+
+    .catering-partners-page input[type="file"]::file-selector-button {
+        border-color: #444444;
+        background: #292929;
+        color: #FFFFFF;
+    }
+
+    .catering-partners-page input[type="file"]:hover::file-selector-button {
+        background: #333333;
+    }
+
+    .catering-partners-page .form-check-input {
+        border-color: #777777;
+        background-color: #1A1A1A;
+    }
+
+    .catering-partners-page .form-check-input:checked {
+        border-color: #FBAB18;
+        background-color: #FBAB18;
+    }
+
+    .catering-partners-page .btn-outline-dark {
+        border-color: #555555;
+        color: #FFFFFF;
+    }
+
+    .catering-partners-page .btn-outline-dark:hover,
+    .catering-partners-page .btn-outline-dark:focus {
+        border-color: #FBAB18;
+        background: #FBAB18;
+        color: #111111;
+    }
+
+    .catering-partners-page .btn-outline-danger {
+        border-color: #dc3545;
+        color: #ff7b86;
+    }
+
+    .catering-partners-page .btn-outline-danger:hover,
+    .catering-partners-page .btn-outline-danger:focus {
+        background: #dc3545;
+        color: #FFFFFF;
+    }
+
+    .catering-partners-page .partner-logo-preview {
+        border-color: #444444 !important;
+        background: #FFFFFF;
+    }
+
+    @media (max-width: 767.98px) {
+        .catering-partners-page .card-custom {
+            border-radius: 16px;
+        }
+
+        .catering-partners-page > .d-flex:first-child .btn {
+            width: 100%;
+        }
+    }
+</style>
+<div class="catering-partners-page">
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
     <div>
         <p class="small fw-bold text-uppercase text-warning-emphasis mb-1">Marketing Admin</p>
@@ -47,7 +174,7 @@
                 @csrf
                 @method('PUT')
                 <div class="col-md-2">
-                    <div class="d-flex min-vh-10 align-items-center justify-content-center rounded-3 border bg-white p-3">
+                    <div class="partner-logo-preview d-flex min-vh-10 align-items-center justify-content-center rounded-3 border bg-white p-3">
                         @if ($partner->publicLogoUrl())
                             <img src="{{ $partner->publicLogoUrl() }}" alt="{{ $partner->name }} logo" class="img-fluid" style="max-height: 4rem">
                         @else
@@ -64,7 +191,7 @@
                     <input id="partner-website-{{ $partner->id }}" class="form-control" type="url" name="website_url" value="{{ $partner->website_url }}" maxlength="2048">
                 </div>
                 <div class="col-md-4">
-                    <label for="partner-logo-{{ $partner->id }}" class="form-label fw-semibold">Replace Logo (PNG, JPG, JPEG, SVG, WebP)</label>
+                    <label for="partner-logo-{{ $partner->id }}" class="form-label fw-semibold">Replace logo (PNG, JPG, JPEG, SVG, WebP)</label>
                     <input id="partner-logo-{{ $partner->id }}" class="form-control" type="file" name="logo" accept=".png,.jpg,.jpeg,.svg,.webp,image/png,image/jpeg,image/svg+xml,image/webp">
                 </div>
                 <div class="col-sm-4 col-md-2">
@@ -91,6 +218,5 @@
         <div class="card-custom p-5 text-center text-secondary">No catering partners are configured yet.</div>
     @endforelse
 </div>
+</div>
 @endsection
-
-

@@ -16,6 +16,22 @@ class AuthFlowTest extends TestCase
 {
     use WithFaker;
 
+    public function test_registration_rejects_letters_in_phone_number(): void
+    {
+        $response = $this->from('/register')->post('/register', [
+            'first_name' => 'Maria',
+            'last_name' => 'Cruz',
+            'email' => 'phone-validation+'.uniqid().'@example.com',
+            'phone' => '0917CALL123',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $response->assertRedirect('/register');
+        $response->assertSessionHasErrors('phone');
+        $this->assertDatabaseMissing('users', ['phone' => '0917CALL123']);
+    }
+
     public function test_user_can_register_and_login(): void
     {
         $email = 'maria+'.uniqid().'@example.com';
@@ -76,6 +92,30 @@ class AuthFlowTest extends TestCase
             ->assertSee('09179998888');
 
         $this->get('/email/verify')->assertNotFound();
+    }
+
+    public function test_google_account_cannot_change_email(): void
+    {
+        $user = User::factory()->create(['email' => 'ragnarokgenshin@gmail.com']);
+        $user->socialAccounts()->create([
+            'provider' => 'google',
+            'provider_user_id' => 'google-user-'.uniqid(),
+        ]);
+
+        $this->actingAs($user)
+            ->put('/profile', [
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => 'test@gmail.com',
+                'phone' => $user->phone,
+            ])
+            ->assertRedirect('/profile/edit')
+            ->assertSessionHasErrors('email');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'email' => 'ragnarokgenshin@gmail.com',
+        ]);
     }
 
     public function test_user_can_upload_a_profile_picture(): void
